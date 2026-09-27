@@ -78,11 +78,12 @@ VCの出入りから声が出るまで
 
 - 次の工程のToDo一覧は、上から順に（危ない所から）並べる（決定表 12）。
 - 1番と2番（`cargo build` の実測とVOICEVOXのメモリの実測）は、同時に走らせない。どちらも1.9GiBのメモリを食い合うため。1番のビルドが終わってから、2番を始める。
+- Q-84 の「20件でおよそ2分」の見込みは、1件あたり合成約6秒＋再生の前提で見直しが要るかもしれない（2番の実測から。設計は変えない）。
 
 | 項目 | 確かめ方 | 確かめる工程 |
 |---|---|---|
 | 1. Ubuntu 22.04でsongbird 0.6（Opus）をビルドするのに、cmake・libopus-devが要るか［C］。VPSの上で `cargo build --release` がメモリ1.9GiB＋スワップ2GiBで通るか（`-j 1`）［C］。依存の版（tokio・reqwest・serde・toml・tracing・unicode-segmentation・symphonia）と、絵文字を判定するcrateの選定［C］ | 通った（2026-09-27・-j 1・最大 約0.9GB・約14分）。cmake が必須。代替（GitHub Actions）は不要。数字は `docs/measurements.md` の① | ToDo一覧の1番目 |
-| 2. VOICEVOX ENGINE（`voicevox/voicevox_engine:cpu-latest`）が、メモリ1.9GiBのVPSで、botとnginxと一緒に動くか。公式のREADMEには必要なメモリの記載が無い［C］ | 1番のビルドが終わってから、コンテナを `-p 127.0.0.1:50021:50021` で起動し、30文字ほどの文を続けて合成させて、`docker stats` でメモリの最大の使用量を測る。動かなければ、Q-115のbに切り替える（自宅のWindows PCのVOICEVOXをTailscale経由で呼ぶ。VPSにTailscaleが要る［C］） | ToDo一覧の2番目 |
+| 2. VOICEVOX ENGINE（`voicevox/voicevox_engine:cpu-latest`）が、メモリ1.9GiBのVPSで、botとnginxと一緒に動くか。公式のREADMEには必要なメモリの記載が無い［C］ | メモリは通った（2026-09-27・コンテナ383MiB・ホスト残り約980MB）。速さは約0.8秒＋0.16秒×文字数（CPU版）。許容の判断は4周目で。数字は `docs/measurements.md` の② | ToDo一覧の2番目 |
 | 3. VPSから、songbird 0.6 でDAVEを使ってVCにつながるか［C］ | AT-01を通す | ToDo一覧の最初のほう |
 | 4. メモリ上のwavを、一時ファイルを作らずにsongbirdに渡せるか［C］ | songbird 0.6 のドキュメントとexamplesを読み、AT-37で確かめる | ToDo一覧の最初のほう（P-6の直し方が変わるため） |
 | 5. botが「人に切断された」「別のVCへ移された」「ネットの不調で切れた」を区別できるか。twilightのVOICE_STATE_UPDATEと、songbirdのドライバの知らせの組み合わせで判別する［C］ | songbirdのイベントの型を読み、AT-08・AT-10・AT-29で確かめる | ToDo一覧の最初のほう（B-12・B-14・B-15が分かれるため） |

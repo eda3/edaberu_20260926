@@ -19,13 +19,20 @@ VPSやテスト用のサーバーで測った数字と、見えたことを書�
 
 ## ② VPSでのVOICEVOX（`docs/todo.md` 1周目・4節の2番）
 
-- 測った日：
-- イメージ：`voicevox/voicevox_engine:cpu-latest`（pull した日のダイジェストが分かれば）
-- 使う話者と `id`（`/speakers` の結果から）：
-- 30文字の合成 10回：最大　秒／中央値　秒
-- `docker stats --no-stream` の MEM USAGE：
-- 合成の直後の `free -m`（used／available）：
-- 判定：VPSで使う（Q-115 a のまま）／自宅PCへ切り替える（Q-115 b）
+- 測った日：2026-09-27
+- イメージ：`voicevox/voicevox_engine:cpu-latest`（VOICEVOX ENGINE 0.25.2・supported_devices `{"cpu":true,"cuda":false,"dml":false}`）
+- 使う話者と `id`（`/speakers` の結果から）：ずんだもん ノーマル・id 3
+- 起動直後の `free -m`：used 517MB・available 1240MB・swap 307MB
+- 30文字の合成 10回：8.26・6.05・5.64・5.68・5.68・5.60・5.65・5.32・5.65・5.41 秒。最大 8.26 秒（1回目）／中央値 5.65 秒
+- 5文字の合成 3回：1.71・1.59・1.58 秒
+- 14文字の合成 3回：2.99・3.17・3.13 秒
+- ［推測］合成の時間 ≈ 0.8秒＋0.16秒×文字数（上の3つの長さからの見積もり）
+- `docker stats --no-stream` の MEM USAGE：382.9MiB / 1.912GiB（19.55%）
+- 合成の直後の `free -m`（used／available）：used 778MB・available 979MB・swap 309MB
+- nproc：未計測
+- 判定：
+  - メモリ：同居できる（Q-115 a のまま）
+  - 速さ：短い発言で1〜2秒、30文字で約5.7秒（CPU版）。まず a のまま進め、4周目でVCで聞いてから、`max_chars` を下げる／Q-115 b に切り替える／次の区切りを再生中に先に作る、のどれかを決める（えだの判断・今は未）
 
 ## ③ VCへの接続（2周目・4節の3番）
 

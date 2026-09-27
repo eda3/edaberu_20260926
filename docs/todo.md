@@ -27,7 +27,7 @@
     4. `/usr/bin/time -v cargo build --release -j 1 2>&1 | tail -n 30`
     5. 記録する数字：`Elapsed (wall clock) time`、`Maximum resident set size`（KB）、ビルド中に別の端末で `free -m` を何度か見たときのスワップの最大。`docs/measurements.md` の①に書く
   - 通らなかったとき: エラーの先頭20行を①に貼る。GitHub Actions（runner は `ubuntu-22.04`、または `ubuntu:22.04` のコンテナの中）でビルドしてバイナリを置く形に切り替えるかは、えだが決める。決めたら、この下に「[ ] GitHub Actions でビルドする workflow を作る」を足す
-- [ ] 【VPS】② VOICEVOXの実測（`docs/test-items.md` ②・4節の2番）
+- [x] 【VPS】② VOICEVOXの実測（`docs/test-items.md` ②・4節の2番）
   - メモ: ①が終わってから。順に打つ。
     1. `docker run -d --name voicevox --restart unless-stopped -p 127.0.0.1:50021:50021 voicevox/voicevox_engine:cpu-latest`
     2. 話者の一覧を見る：`curl -s http://127.0.0.1:50021/speakers | python3 -c 'import sys,json; [print(s["name"], [(t["name"], t["id"]) for t in s["styles"]]) for s in json.load(sys.stdin)]'` → 使う話者（ずんだもん など）のスタイルの `id` を控える。`config.example.toml` の `speaker_id` に書く番号になる
