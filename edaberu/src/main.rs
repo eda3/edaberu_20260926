@@ -6,6 +6,7 @@ mod state;
 use std::{env, io::IsTerminal as _};
 
 use anyhow::Context as _;
+use edaberu_core::config::check_token;
 use state::Config;
 use tracing_subscriber::{EnvFilter, filter::LevelFilter};
 use twilight_model::id::{Id, marker::UserMarker};
@@ -21,15 +22,6 @@ fn env_id<T>(name: &str) -> anyhow::Result<Id<T>> {
         .parse()
         .with_context(|| format!("{name} が数字でない（B-39）"))?;
     Id::new_checked(number).with_context(|| format!("{name} は0にできない（B-39）"))
-}
-
-/// `DISCORD_TOKEN` の読み取りの結果を確かめる。誤りの文には、トークンの値を含めない
-/// （`VarError::NotUnicode` の Display は値そのものを含むため、つながずに置き換える）。
-fn check_token(read: Result<String, env::VarError>) -> anyhow::Result<String> {
-    read.map_err(|error| match error {
-        env::VarError::NotPresent => anyhow::anyhow!("環境変数 DISCORD_TOKEN が無い（B-44）"),
-        env::VarError::NotUnicode(_) => anyhow::anyhow!("環境変数 DISCORD_TOKEN が UTF-8 でない"),
-    })
 }
 
 /// 起動に必要な設定。まだ `edaberu_core::config` が無いので、環境変数から最小限だけ読む
@@ -96,69 +88,4 @@ async fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use std::{env::VarError, ffi::OsString};
-
-    use super::check_token;
-
-    const SECRET: &str = "bogus-token-12345";
-
-    /// 末尾に UTF-8 として不正な1単位を付けた値（`VarError::NotUnicode` の中身の見本）。
-    #[cfg(windows)]
-    fn not_unicode(prefix: &str) -> OsString {
-        use std::os::windows::ffi::OsStringExt as _;
-        let mut units: Vec<u16> = prefix.encode_utf16().collect();
-        units.push(0xD800);
-        OsString::from_wide(&units)
-    }
-
-    /// 末尾に UTF-8 として不正な1単位を付けた値（`VarError::NotUnicode` の中身の見本）。
-    #[cfg(unix)]
-    fn not_unicode(prefix: &str) -> OsString {
-        use std::os::unix::ffi::OsStringExt as _;
-        let mut bytes = prefix.as_bytes().to_vec();
-        bytes.push(0xFF);
-        OsString::from_vec(bytes)
-    }
-
-    #[test]
-    fn token_not_unicode_message_does_not_contain_value() -> anyhow::Result<()> {
-        let value = not_unicode(SECRET);
-        anyhow::ensure!(
-            value.clone().into_string().is_err(),
-            "見本の値が UTF-8 として正しくなっている"
-        );
-
-        let Err(error) = check_token(Err(VarError::NotUnicode(value))) else {
-            anyhow::bail!("NotUnicode なのに Ok が返った");
-        };
-        let text = format!("{error:#}");
-
-        anyhow::ensure!(
-            !text.contains(SECRET),
-            "トークンの値が誤りの文に出た: {text}"
-        );
-        anyhow::ensure!(
-            text == "環境変数 DISCORD_TOKEN が UTF-8 でない",
-            "文が違う: {text}"
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn token_not_present_message_is_b44() -> anyhow::Result<()> {
-        let Err(error) = check_token(Err(VarError::NotPresent)) else {
-            anyhow::bail!("NotPresent なのに Ok が返った");
-        };
-        let text = format!("{error:#}");
-
-        anyhow::ensure!(
-            text == "環境変数 DISCORD_TOKEN が無い（B-44）",
-            "文が違う: {text}"
-        );
-        Ok(())
-    }
 }

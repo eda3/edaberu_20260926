@@ -78,7 +78,7 @@
 
 ゴール: `cargo test -p edaberu_core` で ③〜⑫ が全部通る。twilight・songbird に依存しない。
 
-- [ ] `config` を作り、③を満たす（3節の設定項目、B-38〜B-42・B-44）
+- [x] `config` を作り、③を満たす（3節の設定項目、B-38〜B-42・B-44）
   - メモ: 設定ファイルは `config.toml`（TOML・serde）。知らない項目は誤りにする（`#[serde(deny_unknown_fields)]`）。`max_chars` は1以上。トークンは環境変数 `DISCORD_TOKEN` から。終了の理由は文字列で返し、`main` が表示する。`config.example.toml` の中身と一致させる（テストで読み込む）
 - [ ] `names` と、絵文字の判定を作り、④を満たす（R-36・R-41・R-42）
   - メモ: 絵文字の判定は小さなモジュール（`emoji`）に分けて `speech` からも使う。判定は Unicode の Extended_Pictographic（または Emoji）の性質で行う。
