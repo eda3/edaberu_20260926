@@ -54,13 +54,13 @@
 
 - [x] 【えだ】テスト用のDiscordサーバーとbotのアプリを用意する
   - メモ: Developer Portal で、Message Content Intent をオン、Public Bot をオフ。サーバーに、テスト用のVC 2つ（対象のVCと、それ以外のVC「X」）とテキストチャンネル1つ。botを招く（権限：チャンネルを見る・メッセージを読む・接続・発言）。控えるもの：トークン（`DISCORD_TOKEN`。手元では環境変数、VPSでは `/etc/edaberu/edaberu.env`）、サーバーID、テキストチャンネルID、対象のVCのID。テストで使う音は、短いwavを1つ用意して `edaberu/tests/fixtures/beep.wav` に置く（VOICEVOXで作った物でも、フリー素材でもよい。ライセンスを1行 README に書く）
-- [x] `gateway` の骨組み：twilightでつなぎ、出来事を受けて `state` を更新する（B-43〜B-46）
+- [x] `gateway` の骨組み：twilightでつなぎ、出来事を受けて `state` を更新する（B-43〜B-46）Issue #1・Issue #3
   - メモ: intent は GUILDS・GUILD_MESSAGES・GUILD_VOICE_STATES・MESSAGE_CONTENT。GUILD_CREATE・VOICE_STATE_UPDATE・MESSAGE_CREATE を受け、ログ（tracing）に出す。起動時の確認：トークンが無い（B-44）、間違っている／intentが許可されていない＝閉じるコード4014（B-45。確度B）、IDが見つからない（B-43）。`state` はまだ `edaberu_core` に無いので、ここでは最小の構造体を `edaberu` 側に置き、3周目で `edaberu_core::state` に移す（移すことをコメントに書く）。**起動時に対象のVCにいる人が人かbotか**（4節の20番）を、GUILD_CREATE の中身をログに出して確かめ、結果（揃う／揃わない）を4節の20番に書き戻す。揃わなければ止まって聞く（RESTで取るか、GUILD_MEMBERS を足すかは、えだが決める）
   - 完了条件: 手元でbotを起動すると、Discordにつながり、VCの出入りとテキストの発言がログに出る
-- [x] `player`（songbird）と、対象のVCへの参加：`docs/test-items.md` ⑬（AT-01 の形。4節の3番・16番）
+- [x] `player`（songbird）と、対象のVCへの参加：`docs/test-items.md` ⑬（AT-01 の形。4節の3番・16番）Issue #2
   - メモ: 人が対象のVCに入ったら、スピーカーミュート（self deaf）で入り、`beep.wav` を1回鳴らす（まだ読み上げの文は作らない）。DAVE は songbird 0.6 の `driver` 機能に含まれる［A］。つながらないときは、songbird のログ（`RUST_LOG=songbird=debug`）の先頭30行を `docs/measurements.md` の③に貼り、止まって聞く
   - 完了条件: テスト用のアカウントで対象のVCに入ると、botが入ってきて音が鳴る。VCの一覧で、botのヘッドホンに斜線が出ている
-- [ ] メモリ上のwavを songbird に渡す：`docs/test-items.md` ⑭（AT-37 の形。4節の4番・P-6）
+- [x] メモリ上のwavを songbird に渡す：`docs/test-items.md` ⑭（AT-37 の形。4節の4番・P-6）
   - メモ: `beep.wav` をファイルからでなく `Vec<u8>` として渡して鳴らす。渡せたら4節の4番に「渡せる」と書く。渡せないときは、一時ファイルに書いて流し終えたら消す形に変え、P-6 と 4節の4番を書き直す（書き直しの内容は止まって聞く）
 - [ ] 切断・移動・不調を区別する：`docs/test-items.md` ⑮（AT-08・AT-09・AT-10・AT-29 の形。4節の5番）
   - メモ: 管理者のアカウントで、botを「切断」する／別のVC「X」へ移す、の2つを実際にやり、twilight の VOICE_STATE_UPDATE と songbird のドライバの知らせ（切れた・つなぎ直した）をログに出す。ネットの不調は、手元なら数十秒 Wi-Fi を切る（VPSでは AT-29 の塞ぎ方をあとで決める）。3つが区別できたら、区別の方法を4節の5番に書く。区別できないものがあれば、B-12・B-14・B-15 のどこが分かれなくなるかを書いて止まって聞く

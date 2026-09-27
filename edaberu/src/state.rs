@@ -20,6 +20,7 @@ pub struct Config {
 /// gatewayが受けた出来事で変わる、最小の状態。
 #[derive(Default)]
 pub struct State {
-    /// 対象のVCに、`GUILD_CREATE` の時点でいたユーザーID（人かbotかの判定に使う）。
+    /// 対象のVCに、`GUILD_CREATE` の時点でいた、bot でない人のユーザーID
+    /// （`members` で重複を除き、bot を除いた後の一覧。B-10）。
     pub voice_channel_members: Vec<Id<UserMarker>>,
 }
