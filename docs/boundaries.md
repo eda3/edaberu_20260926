@@ -48,7 +48,7 @@
 8. `tts` が失敗したら、その発言の残りを飛ばしてログに書く（B-32）。
 
 VCの出入りから声が出るまで
-1. `gateway` が VOICE_STATE_UPDATE を受け取り、`state` の各VCの人数を更新する。
+1. `gateway` が VOICE_STATE_UPDATE を受け取り、`state` の各VCの人数を更新する。起動時は GUILD_CREATE の members（重複除去後）から、VCにいる人（botでない）を数える（B-10）。
 2. 誰の変化か（人・他のbot・bot自身）と、前後のVCを `voice_rules` に渡す。
 3. `voice_rules` が指示の並びを返す。
 4. 指示ごとに次のとおり実行する。
@@ -90,7 +90,7 @@ VCの出入りから声が出るまで
 | 6. 設定やトークンの誤りで終わり続けるとき、systemdの既定（`StartLimitIntervalSec` と `StartLimitBurst`）で起動し直しが止まるか［B］ | systemdのドキュメント（systemd.unit）を読み、わざと設定を壊して `systemctl status` を見る | systemdのサービスを作るとき |
 | 7. `systemctl stop` のSIGTERMで、VCから出る後始末が、systemdの待ち時間の中に終わるか［B］ | AT-25 | VCで聞くテストの工程 |
 | 8. VCの中のチャットのメッセージは、チャンネルIDがそのVCのIDになるか［B］ | AT-10 | VCで聞くテストの工程 |
-| 9. Developer Portal で Message Content Intent をオンにする必要があるか。オフのときに、twilightで理由の分かる誤り（閉じるコード）が届くか［B］ | AT-28 | VCで聞くテストの工程 |
+| 9. Developer Portal で Message Content Intent をオンにする必要があるか。オフのときに、twilightで理由の分かる誤り（閉じるコード）が届くか［B］ → オンにした状態で MESSAGE_CREATE の本文が届いた（content_len=5・2026-09-27）。オフのときの閉じるコードは AT-28 で確かめる | AT-28 | VCで聞くテストの工程 |
 | 10. webhookの発言で、書いた人のbotの印が真になるか。ならなければwebhookのIDで判定する［B］ | twilight-model の型を読む。AT-17の入力を作るときに確かめる | 自動テストの工程 |
 | 11. twilight 0.17 の型に、転送（message_snapshots）・投票・スタンプの欄があるか［C］ | twilight-model 0.17 のドキュメントを読む | R-21・R-24・R-25の自動テストの前 |
 | 12. botの状態の表示に、好きな文（例「VOICEVOX:ずんだもん」）をそのまま出せるか（カスタムステータス）［C］ | twilightの状態の表示の型を読み、AT-24で確かめる | VCで聞くテストの工程 |
@@ -101,4 +101,4 @@ VCの出入りから声が出るまで
 | 17. Discordの名前（ニックネーム・表示名・ユーザー名）が最大32文字であること［B］ | Discordの開発者向けドキュメントを読む | R-36の自動テストの前 |
 | 18. Discordが自動でリンクにするのは http:// か https:// で始まる形だけか［C］ | テスト用のサーバーで「www.example.com」を書いて見る | R-12の自動テストの前 |
 | 19. Public Bot をオフにすると、ほかの人がbotを招けなくなるか［C］ | Discordの開発者向けドキュメントを読む | READMEの手順を仕上げるとき |
-| 20. 起動した時に対象のVCにいるのが人かbotかを、GUILD_MEMBERS の特権intentなしで知れるか［C］。GUILD_CREATE の voice_states には user_id だけが入る見込み［B］。知れなければ、RESTで1人ずつ取るか、Developer Portal で GUILD_MEMBERS をオンにする | AT-07 の前提に「他のbotも対象のVCにいる」を足す | 2周目 |
+| 20. 起動した時に対象のVCにいるのが人かbotかを、GUILD_MEMBERS の特権intentなしで知れるか［C］ → 揃う（2026-09-27・実測）。GUILD_MEMBERS の特権intentなしでも、GUILD_CREATE の members に、VCにいる人（3人・bot=false）と bot 自身（bot=true）が入っていた。members には同じ user_id が重複して届いた（7件で4人）ので、user_id で重複を除いてから数える。RESTもGUILD_MEMBERSも足さない | AT-07 の前提に「他のbotも対象のVCにいる」を足す | 2周目 |

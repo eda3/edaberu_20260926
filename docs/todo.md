@@ -46,15 +46,15 @@
     4. 3の直後に `docker stats --no-stream voicevox` → `MEM USAGE` を控える。`free -m` も控える
     5. `docs/measurements.md` の②に、1回あたりの秒（10回の最大と中央値）、コンテナのメモリ、`free -m` の残りを書く
   - 動かなかったとき（起動しない・メモリ不足で落ちる・1回に10秒以上かかる）: Q-115 の b（自宅のWindows PCのVOICEVOXをTailscale経由で呼ぶ）に切り替える。設計の直しは、えだがClaude Codeに指示する
-- [ ] 【えだ】差分を読んで push する
+- [x] 【えだ】差分を読んで push する
 
 ## 2周目: edaberu（bot）の危ない所 — VCで聞く
 
 ゴール: テスト用のサーバーで、botが対象のVCに入って固定の音が鳴る（AT-01 の形）。切断・移動・不調を区別できるかが分かる。
 
-- [ ] 【えだ】テスト用のDiscordサーバーとbotのアプリを用意する
+- [x] 【えだ】テスト用のDiscordサーバーとbotのアプリを用意する
   - メモ: Developer Portal で、Message Content Intent をオン、Public Bot をオフ。サーバーに、テスト用のVC 2つ（対象のVCと、それ以外のVC「X」）とテキストチャンネル1つ。botを招く（権限：チャンネルを見る・メッセージを読む・接続・発言）。控えるもの：トークン（`DISCORD_TOKEN`。手元では環境変数、VPSでは `/etc/edaberu/edaberu.env`）、サーバーID、テキストチャンネルID、対象のVCのID。テストで使う音は、短いwavを1つ用意して `edaberu/tests/fixtures/beep.wav` に置く（VOICEVOXで作った物でも、フリー素材でもよい。ライセンスを1行 README に書く）
-- [ ] `gateway` の骨組み：twilightでつなぎ、出来事を受けて `state` を更新する（B-43〜B-46）
+- [x] `gateway` の骨組み：twilightでつなぎ、出来事を受けて `state` を更新する（B-43〜B-46）
   - メモ: intent は GUILDS・GUILD_MESSAGES・GUILD_VOICE_STATES・MESSAGE_CONTENT。GUILD_CREATE・VOICE_STATE_UPDATE・MESSAGE_CREATE を受け、ログ（tracing）に出す。起動時の確認：トークンが無い（B-44）、間違っている／intentが許可されていない＝閉じるコード4014（B-45。確度B）、IDが見つからない（B-43）。`state` はまだ `edaberu_core` に無いので、ここでは最小の構造体を `edaberu` 側に置き、3周目で `edaberu_core::state` に移す（移すことをコメントに書く）。**起動時に対象のVCにいる人が人かbotか**（4節の20番）を、GUILD_CREATE の中身をログに出して確かめ、結果（揃う／揃わない）を4節の20番に書き戻す。揃わなければ止まって聞く（RESTで取るか、GUILD_MEMBERS を足すかは、えだが決める）
   - 完了条件: 手元でbotを起動すると、Discordにつながり、VCの出入りとテキストの発言がログに出る
 - [ ] `player`（songbird）と、対象のVCへの参加：`docs/test-items.md` ⑬（AT-01 の形。4節の3番・16番）
