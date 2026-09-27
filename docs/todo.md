@@ -57,7 +57,7 @@
 - [x] `gateway` の骨組み：twilightでつなぎ、出来事を受けて `state` を更新する（B-43〜B-46）
   - メモ: intent は GUILDS・GUILD_MESSAGES・GUILD_VOICE_STATES・MESSAGE_CONTENT。GUILD_CREATE・VOICE_STATE_UPDATE・MESSAGE_CREATE を受け、ログ（tracing）に出す。起動時の確認：トークンが無い（B-44）、間違っている／intentが許可されていない＝閉じるコード4014（B-45。確度B）、IDが見つからない（B-43）。`state` はまだ `edaberu_core` に無いので、ここでは最小の構造体を `edaberu` 側に置き、3周目で `edaberu_core::state` に移す（移すことをコメントに書く）。**起動時に対象のVCにいる人が人かbotか**（4節の20番）を、GUILD_CREATE の中身をログに出して確かめ、結果（揃う／揃わない）を4節の20番に書き戻す。揃わなければ止まって聞く（RESTで取るか、GUILD_MEMBERS を足すかは、えだが決める）
   - 完了条件: 手元でbotを起動すると、Discordにつながり、VCの出入りとテキストの発言がログに出る
-- [ ] `player`（songbird）と、対象のVCへの参加：`docs/test-items.md` ⑬（AT-01 の形。4節の3番・16番）
+- [x] `player`（songbird）と、対象のVCへの参加：`docs/test-items.md` ⑬（AT-01 の形。4節の3番・16番）
   - メモ: 人が対象のVCに入ったら、スピーカーミュート（self deaf）で入り、`beep.wav` を1回鳴らす（まだ読み上げの文は作らない）。DAVE は songbird 0.6 の `driver` 機能に含まれる［A］。つながらないときは、songbird のログ（`RUST_LOG=songbird=debug`）の先頭30行を `docs/measurements.md` の③に貼り、止まって聞く
   - 完了条件: テスト用のアカウントで対象のVCに入ると、botが入ってきて音が鳴る。VCの一覧で、botのヘッドホンに斜線が出ている
 - [ ] メモリ上のwavを songbird に渡す：`docs/test-items.md` ⑭（AT-37 の形。4節の4番・P-6）

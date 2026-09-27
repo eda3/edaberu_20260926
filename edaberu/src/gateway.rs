@@ -1,14 +1,27 @@
 //! twilight でDiscordのgatewayにつなぎ、出来事を受けて `state` を更新する（B-43〜B-46）。
+//! 対象のVCに人が入ったら songbird で入り、`beep.wav` を1回鳴らす（AT-01の形。まだ読み上げの文は作らない）。
+//! `beep.wav` は2周目だけの仮の音。4周目で `speech`・`tts` を使う形に置き換えて外す。
+
+use std::{collections::HashMap, sync::Arc};
 
 use anyhow::{Result, bail};
+use songbird::{Songbird, input::File as SongbirdFile, shards::TwilightMap};
 use twilight_gateway::{Event, EventTypeFlags, Intents, Shard, ShardId, StreamExt as _};
+use twilight_model::id::{
+    Id,
+    marker::{ChannelMarker, GuildMarker, UserMarker},
+};
 
 use crate::state::{Config, State};
 
-/// gatewayが受ける出来事の種類（GatewayClose はフラグに関わらず常に来る）。
+/// gatewayが受ける出来事の種類（`GatewayClose` はフラグに関わらず常に来る）。
 const WANTED_EVENTS: EventTypeFlags = EventTypeFlags::GUILD_CREATE
     .union(EventTypeFlags::VOICE_STATE_UPDATE)
+    .union(EventTypeFlags::VOICE_SERVER_UPDATE)
     .union(EventTypeFlags::MESSAGE_CREATE);
+
+/// 2周目だけの仮の音（AT-01の確認用）。
+const BEEP_WAV: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/beep.wav");
 
 /// Discordにつなぐのに必要な intent（B-45 のもとになる Message Content Intent を含む）。
 fn intents() -> Intents {
@@ -18,11 +31,35 @@ fn intents() -> Intents {
         | Intents::MESSAGE_CONTENT
 }
 
+/// 対象のVCに、スピーカーミュートで入り、`beep.wav` を1回鳴らす（AT-01）。
+/// `songbird.process` を呼ぶループとは別のタスクで呼ぶこと（デッドロックを避けるため）。
+async fn join_and_beep(
+    songbird: &Songbird,
+    guild_id: Id<GuildMarker>,
+    voice_channel_id: Id<ChannelMarker>,
+) -> Result<()> {
+    let call = songbird.join(guild_id, voice_channel_id).await?;
+    {
+        let mut handler = call.lock().await;
+        handler.deafen(true).await?;
+        handler.play_input(SongbirdFile::new(BEEP_WAV).into());
+    }
+    tracing::info!(%guild_id, %voice_channel_id, "対象のVCに入り、beep.wavを鳴らした（AT-01）");
+    Ok(())
+}
+
 /// Discordにつなぎ、出来事をログに出し続ける。トークンが間違っている、または
 /// Message Content Intent がオフのとき（クローズコード 4014・確度B）は、理由を返して終了する（B-45）。
-pub async fn run(token: String, config: &Config) -> Result<()> {
+pub async fn run(token: String, config: &Config, bot_user_id: Id<UserMarker>) -> Result<()> {
     let mut state = State::default();
     let mut shard = Shard::new(ShardId::ONE, token, intents());
+
+    let mut senders = HashMap::new();
+    senders.insert(ShardId::ONE.number(), shard.sender());
+    let songbird = Arc::new(Songbird::twilight(
+        Arc::new(TwilightMap::new(senders)),
+        bot_user_id,
+    ));
 
     while let Some(item) = shard.next_event(WANTED_EVENTS).await {
         let event = match item {
@@ -32,6 +69,8 @@ pub async fn run(token: String, config: &Config) -> Result<()> {
                 continue;
             }
         };
+
+        songbird.process(&event).await;
 
         match event {
             Event::GatewayClose(close) => {
@@ -81,8 +120,24 @@ pub async fn run(token: String, config: &Config) -> Result<()> {
                 tracing::info!(
                     user_id = %voice_state.user_id,
                     channel_id = ?voice_state.channel_id,
+                    has_member = voice_state.member.is_some(),
                     "VOICE_STATE_UPDATE を受けた"
                 );
+
+                let joined_target_channel = voice_state.channel_id == Some(config.voice_channel_id)
+                    && voice_state.user_id != bot_user_id;
+                if joined_target_channel && songbird.get(config.guild_id).is_none() {
+                    let songbird = Arc::clone(&songbird);
+                    let guild_id = config.guild_id;
+                    let voice_channel_id = config.voice_channel_id;
+                    tokio::spawn(async move {
+                        if let Err(error) =
+                            join_and_beep(&songbird, guild_id, voice_channel_id).await
+                        {
+                            tracing::warn!(?error, "対象のVCへの参加に失敗した（B-17）");
+                        }
+                    });
+                }
             }
             Event::MessageCreate(message) => {
                 tracing::info!(

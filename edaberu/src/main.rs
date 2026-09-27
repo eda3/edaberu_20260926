@@ -48,5 +48,8 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
-    gateway::run(token, &config).await
+    let http = twilight_http::Client::new(token.clone());
+    let bot_user_id = http.current_user().await?.model().await?.id;
+
+    gateway::run(token, &config, bot_user_id).await
 }

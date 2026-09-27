@@ -84,7 +84,7 @@ VCの出入りから声が出るまで
 |---|---|---|
 | 1. Ubuntu 22.04でsongbird 0.6（Opus）をビルドするのに、cmake・libopus-devが要るか［C］。VPSの上で `cargo build --release` がメモリ1.9GiB＋スワップ2GiBで通るか（`-j 1`）［C］。依存の版（tokio・reqwest・serde・toml・tracing・unicode-segmentation・symphonia）と、絵文字を判定するcrateの選定［C］ | 通った（2026-09-27・-j 1・最大 約0.9GB・約14分）。cmake が必須。代替（GitHub Actions）は不要。数字は `docs/measurements.md` の① | ToDo一覧の1番目 |
 | 2. VOICEVOX ENGINE（`voicevox/voicevox_engine:cpu-latest`）が、メモリ1.9GiBのVPSで、botとnginxと一緒に動くか。公式のREADMEには必要なメモリの記載が無い［C］ | メモリは通った（2026-09-27・コンテナ383MiB・ホスト残り約980MB）。速さは約0.8秒＋0.16秒×文字数（CPU版）。許容の判断は4周目で。数字は `docs/measurements.md` の② | ToDo一覧の2番目 |
-| 3. VPSから、songbird 0.6 でDAVEを使ってVCにつながるか［C］ | AT-01を通す | ToDo一覧の最初のほう |
+| 3. VPSから、songbird 0.6 でDAVEを使ってVCにつながるか［C］ → つながった（2026-09-27・Windows・songbird 0.6・DAVE・Aes256Gcm・c-nrt08）。beep.wav は 0.34秒で最後まで再生（Playable→End） | AT-01を通す | ToDo一覧の最初のほう |
 | 4. メモリ上のwavを、一時ファイルを作らずにsongbirdに渡せるか［C］ | songbird 0.6 のドキュメントとexamplesを読み、AT-37で確かめる | ToDo一覧の最初のほう（P-6の直し方が変わるため） |
 | 5. botが「人に切断された」「別のVCへ移された」「ネットの不調で切れた」を区別できるか。twilightのVOICE_STATE_UPDATEと、songbirdのドライバの知らせの組み合わせで判別する［C］ | songbirdのイベントの型を読み、AT-08・AT-10・AT-29で確かめる | ToDo一覧の最初のほう（B-12・B-14・B-15が分かれるため） |
 | 6. 設定やトークンの誤りで終わり続けるとき、systemdの既定（`StartLimitIntervalSec` と `StartLimitBurst`）で起動し直しが止まるか［B］ | systemdのドキュメント（systemd.unit）を読み、わざと設定を壊して `systemctl status` を見る | systemdのサービスを作るとき |
@@ -97,8 +97,9 @@ VCの出入りから声が出るまで
 | 13. VOICEVOXのクレジット表記（「VOICEVOX:キャラ名」）が要ること。二次情報（解説記事）で確認しただけで、公式の規約は読んでいない［B］。botの状態の表示に出すだけで要件を満たすかは未確認［C］ | VOICEVOX公式サイトの、使う話者の利用規約を読む | 見本の設定ファイルの話者を決めるとき |
 | 14. VOICEVOXのエンジンに、話者の一覧を返す `/speakers` があること［B］ | VOICEVOXのエンジンのAPIのドキュメントを読む | `tts` の自動テストの前 |
 | 15. VOICEVOXの声の前後に短い無音があり、区切りの間に無音を足さなくても聞き取れるか［B］ | AT-21の本物版を聞く | VCで聞くテストの工程 |
-| 16. songbirdで、スピーカーミュートの状態で入れるか［B］ | songbirdの `Call` のドキュメントを読む。AT-01で見る | VCで聞くテストの工程 |
+| 16. songbirdで、スピーカーミュートの状態で入れるか［B］ → 入れた：［出た］（VCの一覧のヘッドホンの斜線・えだの目視・2026-09-27） | songbirdの `Call` のドキュメントを読む。AT-01で見る | VCで聞くテストの工程 |
 | 17. Discordの名前（ニックネーム・表示名・ユーザー名）が最大32文字であること［B］ | Discordの開発者向けドキュメントを読む | R-36の自動テストの前 |
 | 18. Discordが自動でリンクにするのは http:// か https:// で始まる形だけか［C］ | テスト用のサーバーで「www.example.com」を書いて見る | R-12の自動テストの前 |
 | 19. Public Bot をオフにすると、ほかの人がbotを招けなくなるか［C］ | Discordの開発者向けドキュメントを読む | READMEの手順を仕上げるとき |
-| 20. 起動した時に対象のVCにいるのが人かbotかを、GUILD_MEMBERS の特権intentなしで知れるか［C］ → 揃う（2026-09-27・実測）。GUILD_MEMBERS の特権intentなしでも、GUILD_CREATE の members に、VCにいる人（3人・bot=false）と bot 自身（bot=true）が入っていた。members には同じ user_id が重複して届いた（7件で4人）ので、user_id で重複を除いてから数える。RESTもGUILD_MEMBERSも足さない | AT-07 の前提に「他のbotも対象のVCにいる」を足す | 2周目 |
+| 20. 起動した時に対象のVCにいるのが人かbotかを、GUILD_MEMBERS の特権intentなしで知れるか［C］ → 揃う（2026-09-27・実測）。GUILD_MEMBERS の特権intentなしでも、GUILD_CREATE の members に、VCにいる人（3人・bot=false）と bot 自身（bot=true）が入っていた。members には同じ user_id が重複して届いた（7件で4人）ので、user_id で重複を除いてから数える。RESTもGUILD_MEMBERSも足さない。動作中の VOICE_STATE_UPDATE にも member が付いた（has_member=true・人とbot自身・2026-09-27）。B-07 の判定はこれで行う | AT-07 の前提に「他のbotも対象のVCにいる」を足す | 2周目 |
+| 21. songbird が標準出力に出す `[DAVE Binary]` の行を抑えられるか［C］。journal に tracing の行と混ざる | songbird のログ設定を読む | 4周目のログ整備 |
