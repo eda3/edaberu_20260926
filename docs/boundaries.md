@@ -72,6 +72,7 @@ VCの出入りから声が出るまで
 | tracing・tracing-subscriber | tracing 0.1.44・tracing-subscriber 0.3.23（機能 `env-filter`。`RUST_LOG` で絞るため） | ログ | A（版） |
 | unicode-segmentation | 1.13.3 | 書記素で文字数を数える（R-33） | A（版） |
 | anyhow | 1.0.104 | `edaberu` 側のエラー（`anyhow::Result`。CLAUDE.md の Code Style）。`edaberu_core` は使わず、自前のエラー型にする | A（版） |
+| async-trait | 0.1.92 | `edaberu` 側だけ。songbirdの `EventHandler` trait（`async fn act`）を実装するため。songbirdは自分では再エクスポートしていない | A（版） |
 | 絵文字を判定するcrate（候補は未定） | 未確認 | Unicodeの絵文字の一覧に載るかどうかの判定（R-15・R-16・R-41） | C |
 
 ## 4 未確認の項目
@@ -86,7 +87,7 @@ VCの出入りから声が出るまで
 | 2. VOICEVOX ENGINE（`voicevox/voicevox_engine:cpu-latest`）が、メモリ1.9GiBのVPSで、botとnginxと一緒に動くか。公式のREADMEには必要なメモリの記載が無い［C］ | メモリは通った（2026-09-27・コンテナ383MiB・ホスト残り約980MB）。速さは約0.8秒＋0.16秒×文字数（CPU版）。許容の判断は4周目で。数字は `docs/measurements.md` の② | ToDo一覧の2番目 |
 | 3. VPSから、songbird 0.6 でDAVEを使ってVCにつながるか［C］ → 通った（2026-09-27・Windows・songbird 0.6.0・DAVE・Aes256Gcm）。1回目 c-nrt08、レビュー修正後の2回目 c-nrt16 でも通った。beep.wav はどちらも0.34秒で最後まで再生（Playable→End） | AT-01を通す | ToDo一覧の最初のほう |
 | 4. メモリ上のwavを、一時ファイルを作らずにsongbirdに渡せるか［C］ → 渡せる（2026-09-27）。`std::fs::read` で読んだ `Vec<u8>` を `songbird::input::Input` にそのまま渡して鳴った（`Vec<u8>` は `AsRef<[u8]>` を実装しており、songbird 側でメモリ上のカーソルとして扱われる。一時ファイルは作らない） | songbird 0.6 のドキュメントとexamplesを読み、AT-37で確かめる | ToDo一覧の最初のほう（P-6の直し方が変わるため） |
-| 5. botが「人に切断された」「別のVCへ移された」「ネットの不調で切れた」を区別できるか。twilightのVOICE_STATE_UPDATEと、songbirdのドライバの知らせの組み合わせで判別する［C］ | songbirdのイベントの型を読み、AT-08・AT-10・AT-29で確かめる | ToDo一覧の最初のほう（B-12・B-14・B-15が分かれるため） |
+| 5. botが「人に切断された」「別のVCへ移された」「ネットの不調で切れた」を区別できるか。twilightのVOICE_STATE_UPDATEと、songbirdのドライバの知らせの組み合わせで判別する［C］ → 未確認（手動テストは4周目の⑰と一緒に行う）。見立て：`DisconnectReason` が `None`＝人による切断／移動、`Some(Io)`／`Some(TimedOut)`＝ネットの不調［確度B・songbirdのdocが根拠・未実測］ | songbirdのイベントの型を読み、AT-08・AT-10・AT-29で確かめる | ToDo一覧の最初のほう（B-12・B-14・B-15が分かれるため） |
 | 6. 設定やトークンの誤りで終わり続けるとき、systemdの既定（`StartLimitIntervalSec` と `StartLimitBurst`）で起動し直しが止まるか［B］ | systemdのドキュメント（systemd.unit）を読み、わざと設定を壊して `systemctl status` を見る | systemdのサービスを作るとき |
 | 7. `systemctl stop` のSIGTERMで、VCから出る後始末が、systemdの待ち時間の中に終わるか［B］ | AT-25 | VCで聞くテストの工程 |
 | 8. VCの中のチャットのメッセージは、チャンネルIDがそのVCのIDになるか［B］ | AT-10 | VCで聞くテストの工程 |

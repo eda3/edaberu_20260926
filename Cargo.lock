@@ -686,6 +686,7 @@ name = "edaberu"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "edaberu_core",
  "songbird",
  "symphonia",

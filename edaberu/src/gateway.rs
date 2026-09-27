@@ -8,7 +8,10 @@ use std::{
 };
 
 use anyhow::{Result, bail};
-use songbird::{Songbird, shards::TwilightMap};
+use async_trait::async_trait;
+use songbird::{
+    CoreEvent, Event as SongbirdEvent, EventContext, EventHandler, Songbird, shards::TwilightMap,
+};
 use twilight_gateway::{Event, EventTypeFlags, Intents, Shard, ShardId, StreamExt as _};
 use twilight_model::{
     gateway::payload::incoming::{GuildCreate, MessageCreate, VoiceStateUpdate},
@@ -41,6 +44,37 @@ fn intents() -> Intents {
         | Intents::MESSAGE_CONTENT
 }
 
+/// songbirdのdriverの接続状態の変化をログに出す（test-items ⑮・4節の5番）。
+/// `DriverDisconnect` の `reason` で、切断（`Requested`・`WsClosed`）と
+/// ネットの不調（`Io`・`TimedOut`）を見分けられるか、手動テストで確かめる。
+struct VoiceConnectionLogger {
+    guild_id: Id<GuildMarker>,
+}
+
+#[async_trait]
+impl EventHandler for VoiceConnectionLogger {
+    async fn act(&self, ctx: &EventContext<'_>) -> Option<SongbirdEvent> {
+        match ctx {
+            EventContext::DriverConnect(data) => {
+                tracing::info!(guild_id = %self.guild_id, ?data, "songbird: DriverConnect");
+            }
+            EventContext::DriverReconnect(data) => {
+                tracing::info!(guild_id = %self.guild_id, ?data, "songbird: DriverReconnect");
+            }
+            EventContext::DriverDisconnect(data) => {
+                tracing::info!(
+                    guild_id = %self.guild_id,
+                    kind = ?data.kind,
+                    reason = ?data.reason,
+                    "songbird: DriverDisconnect（B-12・B-14・B-15のどれかは4節5番で判定）"
+                );
+            }
+            _ => {}
+        }
+        None
+    }
+}
+
 /// 対象のVCに、スピーカーミュートで入り、`beep.wav` を1回鳴らす（AT-01）。
 /// wavはメモリ上の `Vec<u8>` として songbird に渡す。一時ファイルは作らない（AT-37・4節の4番・P-6）。
 /// `songbird.process` を呼ぶループとは別のタスクで呼ぶこと（デッドロックを避けるため）。
@@ -54,6 +88,18 @@ async fn join_and_beep(
     {
         let mut handler = call.lock().await;
         handler.deafen(true).await?;
+        handler.add_global_event(
+            SongbirdEvent::Core(CoreEvent::DriverConnect),
+            VoiceConnectionLogger { guild_id },
+        );
+        handler.add_global_event(
+            SongbirdEvent::Core(CoreEvent::DriverReconnect),
+            VoiceConnectionLogger { guild_id },
+        );
+        handler.add_global_event(
+            SongbirdEvent::Core(CoreEvent::DriverDisconnect),
+            VoiceConnectionLogger { guild_id },
+        );
         handler.play_input(beep.into());
     }
     tracing::info!(%guild_id, %voice_channel_id, "対象のVCに入り、beep.wavを鳴らした（AT-01）");
@@ -74,7 +120,39 @@ fn bail_if_fatal_close(code: Option<u16>) -> Result<()> {
     Ok(())
 }
 
-fn handle_guild_create(guild_create: Box<GuildCreate>, config: &Config, state: &mut State) {
+/// まだ対象のVCに参加していなければ、`join_and_beep` を別タスクで起動する。
+/// すでに参加中／参加を試みている途中なら何もしない（二重参加を防ぐ）。
+fn try_join(config: &Config, songbird: &Arc<Songbird>, joining: &JoiningGuilds) {
+    if songbird.get(config.guild_id).is_some() {
+        return;
+    }
+    // すでに参加を試みている途中なら、二重に join_and_beep を起動しない
+    // （このチェックと実際の songbird への登録の間に隙間があるため）。
+    let already_joining = !joining.lock().unwrap().insert(config.guild_id);
+    if already_joining {
+        return;
+    }
+
+    let songbird = Arc::clone(songbird);
+    let joining = Arc::clone(joining);
+    let guild_id = config.guild_id;
+    let voice_channel_id = config.voice_channel_id;
+    tokio::spawn(async move {
+        if let Err(error) = join_and_beep(&songbird, guild_id, voice_channel_id).await {
+            tracing::warn!(?error, "対象のVCへの参加に失敗した（B-17）");
+        }
+        joining.lock().unwrap().remove(&guild_id);
+    });
+}
+
+/// 起動時に対象のVCに人（botでない）がいれば、次の入室を待たずに入る（B-10・AT-09）。
+fn handle_guild_create(
+    guild_create: Box<GuildCreate>,
+    config: &Config,
+    state: &mut State,
+    songbird: &Arc<Songbird>,
+    joining: &JoiningGuilds,
+) {
     if guild_create.id() != config.guild_id {
         return;
     }
@@ -110,6 +188,15 @@ fn handle_guild_create(guild_create: Box<GuildCreate>, config: &Config, state: &
             .collect::<Vec<_>>(),
         "GUILD_CREATE の members（4節20番：voice_states の3人が含まれるか）"
     );
+
+    if !state.voice_channel_members.is_empty() {
+        tracing::info!(
+            guild_id = %config.guild_id,
+            count = state.voice_channel_members.len(),
+            "起動時に対象のVCに人がいるので、すぐ入る（B-10）"
+        );
+        try_join(config, songbird, joining);
+    }
 }
 
 /// 対象のVCに人（bot自身以外）が入ったら、songbirdで入って `beep.wav` を鳴らすタスクを起動する（AT-01）。
@@ -132,26 +219,9 @@ fn handle_voice_state_update(
 
     let joined_target_channel = voice_state.channel_id == Some(config.voice_channel_id)
         && voice_state.user_id != bot_user_id;
-    if !joined_target_channel || songbird.get(config.guild_id).is_some() {
-        return;
+    if joined_target_channel {
+        try_join(config, songbird, joining);
     }
-    // すでに参加を試みている途中なら、二重に join_and_beep を起動しない
-    // （このチェックと実際の songbird への登録の間に隙間があるため）。
-    let already_joining = !joining.lock().unwrap().insert(config.guild_id);
-    if already_joining {
-        return;
-    }
-
-    let songbird = Arc::clone(songbird);
-    let joining = Arc::clone(joining);
-    let guild_id = config.guild_id;
-    let voice_channel_id = config.voice_channel_id;
-    tokio::spawn(async move {
-        if let Err(error) = join_and_beep(&songbird, guild_id, voice_channel_id).await {
-            tracing::warn!(?error, "対象のVCへの参加に失敗した（B-17）");
-        }
-        joining.lock().unwrap().remove(&guild_id);
-    });
 }
 
 fn handle_message_create(message: &MessageCreate, config: &Config) {
@@ -199,7 +269,7 @@ pub async fn run(token: String, config: &Config, bot_user_id: Id<UserMarker>) ->
                 tracing::warn!(?code, "gatewayとのつながりが閉じた。つなぎ直しを待つ");
             }
             Event::GuildCreate(guild_create) => {
-                handle_guild_create(guild_create, config, &mut state);
+                handle_guild_create(guild_create, config, &mut state, &songbird, &joining);
             }
             Event::VoiceStateUpdate(voice_state) => {
                 handle_voice_state_update(&voice_state, config, bot_user_id, &songbird, &joining);
