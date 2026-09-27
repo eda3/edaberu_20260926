@@ -1,0 +1,13 @@
+[package]
+name = "edaberu_core"
+version = "0.1.0"
+edition.workspace = true
+
+# twilight・songbird には依存しない（docs/boundaries.md 1節）
+[dependencies]
+reqwest.workspace = true
+serde.workspace = true
+toml.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+unicode-segmentation.workspace = true

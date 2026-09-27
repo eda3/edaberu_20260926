@@ -15,7 +15,7 @@
 - [x] 文書の直し3点（コードはまだ書かない）
   - メモ: ① `docs/external-design.md` の AT-37 と AT-38 の並びを番号順に直す。② `docs/boundaries.md` 4節に「20. 起動した時に対象のVCにいるのが人かbotかを、GUILD_MEMBERS の特権intentなしで知れるか［C］。GUILD_CREATE の voice_states には user_id だけが入る見込み［B］。知れなければ、RESTで1人ずつ取るか、Developer Portal で GUILD_MEMBERS をオンにする。確かめ方：AT-07 の前提に『他のbotも対象のVCにいる』を足す。工程：2周目」を足す。③ `README.md` の「2. botを置く」の前に「0. VPSに Docker と Rust（rustup）を入れる（入っているかは未確認）」を足す。
   - 完了条件: 3ファイルの該当行だけが変わっている（`git diff --stat` で3ファイル）
-- [ ] workspace の骨組みを作る（`edaberu_core` と `edaberu`。中身は空に近い。songbird まで依存に入れる）
+- [x] workspace の骨組みを作る（`edaberu_core` と `edaberu`。中身は空に近い。songbird まで依存に入れる）
   - メモ: ルートの `Cargo.toml` は `[workspace] members = ["edaberu_core", "edaberu"]`、`resolver = "3"`。edition は 2024。`edaberu_core` は lib（モジュールは空で、`pub mod` の宣言だけでよい）。`edaberu` は bin（`main.rs` は「起動して終了」だけ）。依存は `docs/boundaries.md` 3節の表どおり。songbird は `default-features = false`、機能 `driver`・`gateway`・`twilight`・`rustls`・`tws`。symphonia の機能は `wav`・`pcm`（機能名は確度B。通らなければ crates.io で正しい名前を確かめて3節に書き戻す）。`.gitignore`（`target/`・`config.toml`・`*.env`）と `config.example.toml`（3節の設定項目を全部、値は見本）も作る。LICENSE は未定なので作らない。
   - 足してよい依存: `docs/boundaries.md` 3節の表にある物すべて。版は crates.io の最新の安定版を選び、選んだ版を3節の「版」の欄に書き戻す。絵文字を判定する crate はまだ入れない。
   - 完了条件: `cargo build -p edaberu_core` が手元で通る。`cargo check --workspace` も通れば、その旨をメモに書く。手元（Windows）で songbird（Opus）のビルドが通らないときは、エラーの先頭20行を `docs/measurements.md` に貼って、この項目は完了にする（`edaberu` 側のビルドは次の【VPS】①で確かめる）

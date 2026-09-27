@@ -4,6 +4,8 @@ VPSやテスト用のサーバーで測った数字と、見えたことを書�
 
 ## ① VPSでのビルド（`docs/todo.md` 1周目・4節の1番）
 
+- 手元（Windows 11・rustc 1.98.0・MSVC・scoop の cmake）での確認（2026-09-27）：`cargo build -p edaberu_core`・`cargo check --workspace`・`cargo test --workspace`（songbird と opus2 を含む）が通った。VPSでの数字は下に書く
+
 - 測った日：
 - 入れた物（apt・rustup の版）：
 - `cargo build --release -j 1` の結果：通った／通らなかった

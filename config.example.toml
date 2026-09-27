@@ -1,0 +1,23 @@
+# edaberu の設定ファイルの見本（docs/external-design.md 3節）
+# config.toml にコピーして書き換える。トークンはここに書かず、環境変数 DISCORD_TOKEN で渡す。
+
+# 使うサーバーのID（必須）
+guild_id = 100000000000000001
+
+# 読むテキストチャンネルのID（必須）
+text_channel_id = 100000000000000002
+
+# 対象のVCのID（必須）
+voice_channel_id = 100000000000000003
+
+# 本文の前の名前: "always"（毎回）／"omit_consecutive"（同じ人が続いたら省略）／"never"（読まない）
+name_mode = "always"
+
+# 本文を切る文字数（1以上）
+max_chars = 30
+
+# VOICEVOXの話者のID（必須）。VPSの /speakers で確かめる（docs/todo.md 1周目【VPS】②）
+speaker_id = 3
+
+# VOICEVOXのエンジンの場所
+voicevox_url = "http://127.0.0.1:50021"
