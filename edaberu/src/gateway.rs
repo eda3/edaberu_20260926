@@ -7,10 +7,11 @@ use std::{
     sync::{Arc, Mutex as StdMutex},
 };
 
-use anyhow::{Result, bail};
+use anyhow::{Context as _, Result, bail};
 use async_trait::async_trait;
 use songbird::{
-    CoreEvent, Event as SongbirdEvent, EventContext, EventHandler, Songbird, shards::TwilightMap,
+    CoreEvent, Event as SongbirdEvent, EventContext, EventHandler, Songbird, TrackEvent,
+    error::JoinError, shards::TwilightMap,
 };
 use twilight_gateway::{Event, EventTypeFlags, Intents, Shard, ShardId, StreamExt as _};
 use twilight_model::{
@@ -75,6 +76,28 @@ impl EventHandler for VoiceConnectionLogger {
     }
 }
 
+/// トラックの再生の失敗（`TrackEvent::Error`）をログに出す（B-47）。
+/// `play_input` は失敗を返さず、songbird の中でトラックを `PlayMode::Errored` にするだけなので、知らせで受ける。
+struct TrackErrorLogger {
+    guild_id: Id<GuildMarker>,
+}
+
+#[async_trait]
+impl EventHandler for TrackErrorLogger {
+    async fn act(&self, ctx: &EventContext<'_>) -> Option<SongbirdEvent> {
+        if let EventContext::Track(tracks) = ctx {
+            for (state, _) in *tracks {
+                tracing::warn!(
+                    guild_id = %self.guild_id,
+                    playing = ?state.playing,
+                    "beep.wav を再生できなかった（B-47）"
+                );
+            }
+        }
+        None
+    }
+}
+
 /// 対象のVCに、スピーカーミュートで入り、`beep.wav` を1回鳴らす（AT-01）。
 /// wavはメモリ上の `Vec<u8>` として songbird に渡す。一時ファイルは作らない（AT-37・4節の4番・P-6）。
 /// `songbird.process` を呼ぶループとは別のタスクで呼ぶこと（デッドロックを避けるため）。
@@ -83,7 +106,7 @@ async fn join_and_beep(
     guild_id: Id<GuildMarker>,
     voice_channel_id: Id<ChannelMarker>,
 ) -> Result<()> {
-    let beep = std::fs::read(BEEP_WAV)?;
+    let beep = std::fs::read(BEEP_WAV).with_context(|| format!("{BEEP_WAV} を読めなかった"))?;
     let call = songbird.join(guild_id, voice_channel_id).await?;
     {
         let mut handler = call.lock().await;
@@ -99,6 +122,11 @@ async fn join_and_beep(
         handler.add_global_event(
             SongbirdEvent::Core(CoreEvent::DriverDisconnect),
             VoiceConnectionLogger { guild_id },
+        );
+        // play_input より先に登録する（トラックが Errored になる前に、知らせを受ける側をそろえる）。
+        handler.add_global_event(
+            SongbirdEvent::Track(TrackEvent::Error),
+            TrackErrorLogger { guild_id },
         );
         handler.play_input(beep.into());
     }
@@ -139,7 +167,13 @@ fn try_join(config: &Config, songbird: &Arc<Songbird>, joining: &JoiningGuilds) 
     let voice_channel_id = config.voice_channel_id;
     tokio::spawn(async move {
         if let Err(error) = join_and_beep(&songbird, guild_id, voice_channel_id).await {
-            tracing::warn!(?error, "対象のVCへの参加に失敗した（B-17）");
+            tracing::warn!(error = %format!("{error:#}"), "対象のVCへの参加に失敗した（B-17）");
+            // songbird の join は失敗しても Call を残す（manager.rs の join の doc）。
+            // 残したままだと、上の songbird.get で次の入室でも入り直さなくなる（B-17）。
+            match songbird.remove(guild_id).await {
+                Ok(()) | Err(JoinError::NoCall) => {}
+                Err(error) => tracing::warn!(%error, "失敗した参加の Call を消せなかった"),
+            }
         }
         joining.lock().unwrap().remove(&guild_id);
     });
