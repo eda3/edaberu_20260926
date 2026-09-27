@@ -67,10 +67,11 @@ VCの出入りから声が出るまで
 | songbird の `builtin-queue` | 0.6 | 使わない（Claude案）。IDで外す（B-27）、上限で古い物を捨てる（B-30）、発言の途中の区切りを飛ばす（B-32）を、自前の `queue` で持つため | A（機能がある）／B（この用途に合わない） |
 | symphonia | 0.5.5（最新は0.6.1だが、songbird 0.6.0 が 0.5 系に依存しているため、0.5 系の最新にそろえる。0.6 系を入れると songbird 側で `wav` が有効にならない） | songbirdでwavを流すために足す。機能名は `wav`・`pcm`（`default-features = false`） | A（足す必要）／A（機能名・版。crates.io と songbird 0.6.0 の Cargo.toml で確認） |
 | tokio | 1.53.1（機能 `macros`・`rt-multi-thread`・`signal`・`sync`・`time`） | 非同期の実行、サーバーごとの読み上げのタスク、SIGTERM・SIGINTの受け取り（B-37。`signal` 機能の `tokio::signal::unix` を使う） | A（版・機能名） |
-| reqwest | 0.13.5（`default-features = false`。VOICEVOXは `http://127.0.0.1` で呼ぶのでTLSは入れない。songbird は 0.12 系を使うため、2つの版がビルドされる） | VOICEVOXを非同期のHTTPで呼ぶ（P-5）。10秒の打ち切り | A（版） |
+| reqwest | 0.12.28（最新は0.13.5だが、songbird 0.6.0 が使う 0.12 系にそろえる。VPSのビルドで reqwest を2つの版でビルドしないため。`default-features = false`。VOICEVOXは `http://127.0.0.1` で呼ぶのでTLSは入れない） | VOICEVOXを非同期のHTTPで呼ぶ（P-5）。10秒の打ち切り | A（版） |
 | serde・toml | serde 1.0.229（機能 `derive`）・toml 1.1.6 | 設定ファイルを読む。知らない項目があれば誤りにする（B-40） | A（版） |
 | tracing・tracing-subscriber | tracing 0.1.44・tracing-subscriber 0.3.23（機能 `env-filter`。`RUST_LOG` で絞るため） | ログ | A（版） |
 | unicode-segmentation | 1.13.3 | 書記素で文字数を数える（R-33） | A（版） |
+| anyhow | 1.0.104 | `edaberu` 側のエラー（`anyhow::Result`。CLAUDE.md の Code Style）。`edaberu_core` は使わず、自前のエラー型にする | A（版） |
 | 絵文字を判定するcrate（候補は未定） | 未確認 | Unicodeの絵文字の一覧に載るかどうかの判定（R-15・R-16・R-41） | C |
 
 ## 4 未確認の項目

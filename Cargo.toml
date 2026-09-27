@@ -16,10 +16,11 @@ songbird = { version = "0.6.0", default-features = false, features = ["driver", 
 # songbird 0.6.0 が使う 0.5 系に合わせる（0.6 系では songbird 側で wav が有効にならない）
 symphonia = { version = "0.5.5", default-features = false, features = ["wav", "pcm"] }
 tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread", "signal", "sync", "time"] }
-# VOICEVOX は http://127.0.0.1 で呼ぶので TLS は入れない
-reqwest = { version = "0.13.5", default-features = false }
+# songbird 0.6.0 が使う 0.12 系に合わせる（2つの版をビルドしないため）。VOICEVOX は http://127.0.0.1 で呼ぶので TLS は入れない
+reqwest = { version = "0.12.28", default-features = false }
 serde = { version = "1.0.229", features = ["derive"] }
 toml = "1.1.6"
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 unicode-segmentation = "1.13.3"
+anyhow = "1.0.104"

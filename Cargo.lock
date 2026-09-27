@@ -77,6 +77,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.104"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
+
+[[package]]
 name = "arrayvec"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -679,6 +685,7 @@ dependencies = [
 name = "edaberu"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "edaberu_core",
  "songbird",
  "symphonia",
@@ -695,7 +702,7 @@ dependencies = [
 name = "edaberu_core"
 version = "0.1.0"
 dependencies = [
- "reqwest 0.13.5",
+ "reqwest",
  "serde",
  "tokio",
  "toml",
@@ -2767,35 +2774,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "reqwest"
-version = "0.13.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16a1cfa75cc186dd73d5818e510e042e40927bccc9c236b061cea97e1eb08029"
-dependencies = [
- "base64 0.23.1",
- "bytes",
- "futures-core",
- "http",
- "http-body",
- "http-body-util",
- "hyper",
- "hyper-util",
- "js-sys",
- "log",
- "percent-encoding",
- "pin-project-lite",
- "sync_wrapper",
- "tokio",
- "tower",
- "tower-http",
- "tower-service",
- "url",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
-]
-
-[[package]]
 name = "rfc6979"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3229,7 +3207,7 @@ dependencies = [
  "futures",
  "mime_guess",
  "percent-encoding",
- "reqwest 0.12.28",
+ "reqwest",
  "secrecy",
  "serde",
  "serde_cow",
@@ -3411,7 +3389,7 @@ dependencies = [
  "parking_lot 0.12.5",
  "pin-project",
  "rand 0.9.5",
- "reqwest 0.12.28",
+ "reqwest",
  "ringbuf",
  "rubato",
  "rusty_pool",
@@ -3480,7 +3458,7 @@ dependencies = [
  "futures-util",
  "hls_m3u8",
  "patricia_tree",
- "reqwest 0.12.28",
+ "reqwest",
  "tokio",
  "tracing",
  "url",
