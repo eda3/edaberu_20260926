@@ -1,0 +1,16 @@
+# Cargo のビルド結果
+/target/
+**/target/
+
+# rustfmt のバックアップ
+**/*.rs.bk
+
+# MSVC のデバッグ情報
+*.pdb
+
+# 手元の設定とトークン（見本の config.example.toml はコミットする）
+/config.toml
+*.env
+
+# テストで一時的に作る音声
+/tmp/
