@@ -94,3 +94,7 @@ botが戻るのは、次のどちらかのときです。
 振る舞いの参考にしたリポジトリです。コードは写していません。
 
 - [KIKUKOU/yomiagecode](https://github.com/KIKUKOU/yomiagecode)（作者 KIKUKOU、MITライセンス）
+
+## テスト用の音
+
+`edaberu/tests/fixtures/beep.wav`：2周目のVC接続テストで鳴らす合成音（880Hz の正弦波・0.35秒・24kHz・モノラル・16bit PCM・16,844バイト）。2026-09-27 にスクリプトで生成した物で、出典はなく権利表記は不要。4周目で VOICEVOX の声に置き換わる。

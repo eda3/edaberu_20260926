@@ -54,19 +54,25 @@
 
 - [x] 【えだ】テスト用のDiscordサーバーとbotのアプリを用意する
   - メモ: Developer Portal で、Message Content Intent をオン、Public Bot をオフ。サーバーに、テスト用のVC 2つ（対象のVCと、それ以外のVC「X」）とテキストチャンネル1つ。botを招く（権限：チャンネルを見る・メッセージを読む・接続・発言）。控えるもの：トークン（`DISCORD_TOKEN`。手元では環境変数、VPSでは `/etc/edaberu/edaberu.env`）、サーバーID、テキストチャンネルID、対象のVCのID。テストで使う音は、短いwavを1つ用意して `edaberu/tests/fixtures/beep.wav` に置く（VOICEVOXで作った物でも、フリー素材でもよい。ライセンスを1行 README に書く）
-- [x] `gateway` の骨組み：twilightでつなぎ、出来事を受けて `state` を更新する（B-43〜B-46）
+- [x] `gateway` の骨組み：twilightでつなぎ、出来事を受けて `state` を更新する（B-43〜B-46）Issue #1・Issue #3
   - メモ: intent は GUILDS・GUILD_MESSAGES・GUILD_VOICE_STATES・MESSAGE_CONTENT。GUILD_CREATE・VOICE_STATE_UPDATE・MESSAGE_CREATE を受け、ログ（tracing）に出す。起動時の確認：トークンが無い（B-44）、間違っている／intentが許可されていない＝閉じるコード4014（B-45。確度B）、IDが見つからない（B-43）。`state` はまだ `edaberu_core` に無いので、ここでは最小の構造体を `edaberu` 側に置き、3周目で `edaberu_core::state` に移す（移すことをコメントに書く）。**起動時に対象のVCにいる人が人かbotか**（4節の20番）を、GUILD_CREATE の中身をログに出して確かめ、結果（揃う／揃わない）を4節の20番に書き戻す。揃わなければ止まって聞く（RESTで取るか、GUILD_MEMBERS を足すかは、えだが決める）
   - 完了条件: 手元でbotを起動すると、Discordにつながり、VCの出入りとテキストの発言がログに出る
-- [ ] `player`（songbird）と、対象のVCへの参加：`docs/test-items.md` ⑬（AT-01 の形。4節の3番・16番）
+- [x] `player`（songbird）と、対象のVCへの参加：`docs/test-items.md` ⑬（AT-01 の形。4節の3番・16番）Issue #2
   - メモ: 人が対象のVCに入ったら、スピーカーミュート（self deaf）で入り、`beep.wav` を1回鳴らす（まだ読み上げの文は作らない）。DAVE は songbird 0.6 の `driver` 機能に含まれる［A］。つながらないときは、songbird のログ（`RUST_LOG=songbird=debug`）の先頭30行を `docs/measurements.md` の③に貼り、止まって聞く
   - 完了条件: テスト用のアカウントで対象のVCに入ると、botが入ってきて音が鳴る。VCの一覧で、botのヘッドホンに斜線が出ている
-- [ ] メモリ上のwavを songbird に渡す：`docs/test-items.md` ⑭（AT-37 の形。4節の4番・P-6）
+- [x] メモリ上のwavを songbird に渡す：`docs/test-items.md` ⑭（AT-37 の形。4節の4番・P-6）
   - メモ: `beep.wav` をファイルからでなく `Vec<u8>` として渡して鳴らす。渡せたら4節の4番に「渡せる」と書く。渡せないときは、一時ファイルに書いて流し終えたら消す形に変え、P-6 と 4節の4番を書き直す（書き直しの内容は止まって聞く）
+  - player と同じ実装で満たした（7b9e779）
 - [ ] 切断・移動・不調を区別する：`docs/test-items.md` ⑮（AT-08・AT-09・AT-10・AT-29 の形。4節の5番）
   - メモ: 管理者のアカウントで、botを「切断」する／別のVC「X」へ移す、の2つを実際にやり、twilight の VOICE_STATE_UPDATE と songbird のドライバの知らせ（切れた・つなぎ直した）をログに出す。ネットの不調は、手元なら数十秒 Wi-Fi を切る（VPSでは AT-29 の塞ぎ方をあとで決める）。3つが区別できたら、区別の方法を4節の5番に書く。区別できないものがあれば、B-12・B-14・B-15 のどこが分かれなくなるかを書いて止まって聞く
-- [ ] 点検: test-reviewer に点検させ、指摘を壊し方で確かめて直す（最大2回）
+  - 実装済み（2026-09-27）。手動テスト1〜4は4周目の⑰と一緒に行う
+- [x] 点検: test-reviewer に点検させ、指摘を壊し方で確かめて直す（最大2回）
   - メモ: ここまでの `edaberu` 側は「VCで聞く」の確認が中心で、自動テストは少ない。点検役には、ログの出方・エラー時に落ちないこと（B-47）・トークンがログや例外の文に出ないことを見させる
-- [ ] 【えだ】差分を読んで push する
+  - 結果（2026-09-27・点検役は3点で1回・壊し方は手元で起動／読み）：
+    - トークン：偽トークン（`bogus-token-12345`）で起動し、info・trace のどちらでもログと終了の文に0件（終了は「Discordに現在のユーザーを問い合わせられなかった（B-45）: response error: status code 401 …」の1行・終了コード1）。指摘1-1「DISCORD_TOKEN が UTF-8 でないと値が誤りの文に出る」を直した（`check_token`。元に戻すとテストが落ち、文に `"bogus-token-12345\u{d800}"` が出るのを確かめた）
+    - B-47：エラーでbotごと終わる経路は無し。指摘2-1「join が1回失敗すると Call が残り、再起動まで入らない」→失敗したら `songbird.remove`、2-2「再生の失敗がログに出ない」→`TrackEvent::Error` を WARN に、2-3「beep.wav が無いときパスが出ない」→パスを文に入れた。3件とも Discord が要るので読みで確かめた（手動は4周目の⑰と一緒に）
+    - ログ：EDABERU_GUILD_ID が無い／空／0 で、理由が1行（B-41／B-39／B-39）。指摘3-1「RUST_LOG に edaberu を含まないと終了の理由が1行も出ない」→終了の理由を target `edaberu::exit` で出し、その ERROR を常に通す（`RUST_LOG=songbird=debug`・空・`off` で0行→1行）。色の制御文字は端末のときだけ出す（ファイルへの出力で ESC の行 1→0）
+- [ ] 【えだ】PR を作ってもらい、差分を読んで main へ合流する
 
 ## 3周目: edaberu_core（純粋な部品）— 1周目・2周目を待たずに始めてよい
 
@@ -94,7 +100,7 @@
   - メモ: `/audio_query` → `/synthesis` の順。打ち切りの時間は引数で受け、既定は10秒（名前の付いた定数）。やり直さない。`/speakers` から話者の名前を取る（クレジット用）。偽のHTTPサーバーは、まず `tokio::net::TcpListener` で自前に書く（返事をしないサーバー・エラーを返すサーバー・正常なサーバーの3つ）。
   - 足してよい依存: 自前で足りないときだけ、dev-dependencies に1つ（候補：`wiremock`・`httpmock`）
 - [ ] 点検: test-reviewer に点検させ、指摘を壊し方で確かめて直す（最大2回）
-- [ ] 【えだ】差分を読んで push する
+- [ ] 【えだ】PR を作ってもらい、差分を読んで main へ合流する
 
 ## 4周目: つなぐ — 読み上げが通しで聞こえる
 
@@ -108,8 +114,10 @@
   - 完了条件: AT-24 と、手元での Ctrl+C（AT-25 の手元版）が通る
 - [ ] 【えだ】⑰ 残りの「VCで聞く」テストを通す（AT-03〜AT-07・AT-11・AT-13・AT-15・AT-18・AT-23・AT-27・AT-28・AT-36）
   - メモ: 通らなかった番号と、見えたことを `docs/measurements.md` の④に書く。直しはこの下に項目を足す（1件1項目）
+  - 先頭に⑮の手動テスト1〜4
+  - 1（切断）のあと、人が出て入り直す → bot が入るか（Issue #4）
 - [ ] 点検: test-reviewer に点検させ、指摘を壊し方で確かめて直す（最大2回）
-- [ ] 【えだ】差分を読んで push する
+- [ ] 【えだ】PR を作ってもらい、差分を読んで main へ合流する
 
 ## 5周目: VPSに置く
 
@@ -119,4 +127,4 @@
   - メモ: 1周目の①②で分かったこと（入れた物・かかった時間・話者の番号）を反映する。「予定の手順」の断り書きを外す。動かし方の節の番号（0〜4）を整える。GitHub Actions に切り替えていれば、その手順に置き換える
 - [ ] 【VPS】バイナリ・設定・トークン・systemd のサービスを置き、⑱を通す（AT-25・AT-30・AT-38）
   - メモ: README の手順どおりに置く。`sudo systemctl enable --now edaberu` → `journalctl -u edaberu -f` で起動を見る → 対象のVCに入って読み上げを聞く → `sudo systemctl stop edaberu`（VCから出て終わるか）→ `sudo systemctl start edaberu` → `sudo kill -9 $(pidof edaberu)`（systemdが起動し直すか）→ `sudo reboot`（戻るか）。見えたことを `docs/measurements.md` の⑤に書く
-- [ ] 【えだ】1日動かして `journalctl -u edaberu --since yesterday` を見る。気になった行があれば項目を足す。差分を読んで push する
+- [ ] 【えだ】1日動かして `journalctl -u edaberu --since yesterday` を見る。気になった行があれば項目を足す。PR を作ってもらい、差分を読んで main へ合流する

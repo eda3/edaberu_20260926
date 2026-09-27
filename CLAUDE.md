@@ -34,7 +34,7 @@
 - `cargo clippy --workspace -- -D warnings -D clippy::pedantic -D clippy::nursery` の warning は修正してからコミット（songbird がビルドできない環境では `-p edaberu_core` で回す）
 - `cargo fmt` でフォーマットを統一する
 - ファイルの書き換えは Edit の道具で行う。Bash や Python で書き換えない（Bash 経由の書き換えは、チェックポイントと変更の追跡に乗らないため）
-- 1項目＝1コミット。コミットの文は「何をしたか」を1行で。push はえだが行う
+- 1項目＝1コミット。コミットの文は「何をしたか」を1行で。ブランチへの push と PR の作成（`gh pr create`）は Claude Code が行ってよい。main への合流（`gh pr merge`）とブランチの削除はえだが行う
 
 ## テスト
 - テストはこのプロジェクトの検証役。既存のテストは中身を保ち、通らないときは実装の側を直す

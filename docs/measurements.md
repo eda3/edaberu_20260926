@@ -36,13 +36,18 @@ VPSやテスト用のサーバーで測った数字と、見えたことを書�
 
 ## ③ VCへの接続（2周目・4節の3番）
 
-- 試した日：
-- つながった／つながらなかった：
-- songbird のログ（つながらなかったときの先頭30行）：
-- スピーカーミュートで入れたか（4節の16番）：
-- メモリ上のwavを渡せたか（4節の4番）：
+- 試した日：2026-09-27（Windows）
+- つながった／つながらなかった：つながった。songbird 0.6.0・DAVE・暗号 Aes256Gcm
+  - 1回目（レビュー修正前）：つなぎ先 c-nrt08-efc19640…:2087。beep.wav は0.34秒で最後まで再生（Playable→End）
+  - 2回目（レビュー修正後）：つなぎ先 c-nrt16-7ca8bfec.discord.media:2096。beep.wav は0.339993秒（Playable 08:44:03.072781→End 08:44:03.412774）。1回目と同じ
+- 人の入室から音が鳴るまで（2回目のログより）：人のVOICE_STATE_UPDATE（08:44:02.632）→ bot自身のVOICE_STATE_UPDATE（08:44:02.839）＝0.21秒 → Playable（08:44:03.072781）＝人の入室から0.44秒
+- songbird のログに出た `Config`：`gateway_timeout` 10s・`driver_timeout` 10s・`driver_retry` は `Backoff`（0.25s〜10s）・`retry_limit` `Some(5)`・`preallocated_tracks` 1
+- songbird のログ（つながらなかったときの先頭30行）：（つながったため無し）
+- スピーカーミュートで入れたか（4節の16番）：入れた（VCの一覧のヘッドホンの斜線・えだの目視）。レビュー修正後の再確認でも同じ
+- メモリ上のwavを渡せたか（4節の4番）：渡せる（`Vec<u8>` として songbird に渡し、通った。2026-09-27）
 - 切断・移動・不調の区別（4節の5番）：それぞれ、どの知らせで分かったか
-- 起動時の人／botの判定（4節の20番）：GUILD_CREATE で揃った／揃わなかった。揃わなかったときに選んだ手：
+- 起動時の人／botの判定（4節の20番）：GUILD_CREATE で揃った。動作中の VOICE_STATE_UPDATE にも member（bot判定）が付いた（has_member=true）
+- `[DAVE Binary]` の行：`serenity-voice-model` 0.3.0 の `eprintln!`（`binary.rs` 57〜59行・`#[cfg(debug_assertions)]`）。tracing の行とは別の流れ（標準エラー）に出て混ざる。release ビルドでは出ない
 
 ## ④ 「VCで聞く」の受け入れテスト（4周目）
 
