@@ -24,8 +24,7 @@ fn env_id<T>(name: &str) -> anyhow::Result<Id<T>> {
     Id::new_checked(number).with_context(|| format!("{name} は0にできない（B-39）"))
 }
 
-/// 起動に必要な設定。まだ `edaberu_core::config` が無いので、環境変数から最小限だけ読む
-/// （3周目で `config.toml` を読む形に置き換える）。
+/// 起動に必要な設定。4周目の配線で `edaberu_core::config`（`config.toml`）に置き換えるまで、仮に環境変数から最小限だけ読む。
 fn load_config() -> anyhow::Result<(String, Config)> {
     let token = check_token(env::var("DISCORD_TOKEN"))?;
 
