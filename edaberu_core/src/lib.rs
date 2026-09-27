@@ -2,6 +2,8 @@
 
 /// 設定ファイルと環境変数を読み、確かめる。
 pub mod config;
+/// 絵文字を取り除く（`names` と `speech` が使う）。
+pub mod emoji;
 /// 届いた発言を読むかどうかを決める。
 pub mod intake;
 /// 読む名前を決める。

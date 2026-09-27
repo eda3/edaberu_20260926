@@ -80,7 +80,7 @@
 
 - [x] `config` を作り、③を満たす（3節の設定項目、B-38〜B-42・B-44）
   - メモ: 設定ファイルは `config.toml`（TOML・serde）。知らない項目は誤りにする（`#[serde(deny_unknown_fields)]`）。`max_chars` は1以上。トークンは環境変数 `DISCORD_TOKEN` から。終了の理由は文字列で返し、`main` が表示する。`config.example.toml` の中身と一致させる（テストで読み込む）
-- [ ] `names` と、絵文字の判定を作り、④を満たす（R-36・R-41・R-42）
+- [x] `names` と、絵文字の判定を作り、④を満たす（R-36・R-41・R-42）
   - メモ: 絵文字の判定は小さなモジュール（`emoji`）に分けて `speech` からも使う。判定は Unicode の Extended_Pictographic（または Emoji）の性質で行う。
   - 足してよい依存: 絵文字を判定する crate を1つ（候補：`unicode-properties`・`emojis`・`unic-emoji-char`。Unicode 15 以降の表を持つ物を選び、選んだ物と理由を `docs/boundaries.md` 3節に書く）
 - [ ] `speech` の置き換え・読まない物を作り、⑤を満たす（R-01〜R-21）

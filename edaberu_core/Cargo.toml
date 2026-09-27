@@ -5,6 +5,7 @@ edition.workspace = true
 
 # twilight・songbird には依存しない（docs/boundaries.md 1節）
 [dependencies]
+emojis.workspace = true
 reqwest.workspace = true
 serde.workspace = true
 toml.workspace = true
