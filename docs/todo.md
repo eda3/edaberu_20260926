@@ -12,7 +12,7 @@
 
 ゴール: VPSで「ビルドが通るか」「VOICEVOXが動くか」が数字で分かる。動かなければ、代替（GitHub Actions／Tailscale経由の自宅PC）に切り替える材料がそろう。
 
-- [ ] 文書の直し3点（コードはまだ書かない）
+- [x] 文書の直し3点（コードはまだ書かない）
   - メモ: ① `docs/external-design.md` の AT-37 と AT-38 の並びを番号順に直す。② `docs/boundaries.md` 4節に「20. 起動した時に対象のVCにいるのが人かbotかを、GUILD_MEMBERS の特権intentなしで知れるか［C］。GUILD_CREATE の voice_states には user_id だけが入る見込み［B］。知れなければ、RESTで1人ずつ取るか、Developer Portal で GUILD_MEMBERS をオンにする。確かめ方：AT-07 の前提に『他のbotも対象のVCにいる』を足す。工程：2周目」を足す。③ `README.md` の「2. botを置く」の前に「0. VPSに Docker と Rust（rustup）を入れる（入っているかは未確認）」を足す。
   - 完了条件: 3ファイルの該当行だけが変わっている（`git diff --stat` で3ファイル）
 - [ ] workspace の骨組みを作る（`edaberu_core` と `edaberu`。中身は空に近い。songbird まで依存に入れる）

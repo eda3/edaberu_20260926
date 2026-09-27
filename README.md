@@ -23,6 +23,10 @@ docker run -d --name voicevox --restart unless-stopped \
   -p 127.0.0.1:50021:50021 voicevox/voicevox_engine:cpu-latest
 ```
 
+### 0. VPSに Docker と Rust（rustup）を入れる
+
+入っているかは未確認です。
+
 ### 2. botを置く
 
 - botは、VPSの上で `cargo build --release -j 1` でビルドします。

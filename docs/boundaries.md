@@ -99,3 +99,4 @@ VCの出入りから声が出るまで
 | 17. Discordの名前（ニックネーム・表示名・ユーザー名）が最大32文字であること［B］ | Discordの開発者向けドキュメントを読む | R-36の自動テストの前 |
 | 18. Discordが自動でリンクにするのは http:// か https:// で始まる形だけか［C］ | テスト用のサーバーで「www.example.com」を書いて見る | R-12の自動テストの前 |
 | 19. Public Bot をオフにすると、ほかの人がbotを招けなくなるか［C］ | Discordの開発者向けドキュメントを読む | READMEの手順を仕上げるとき |
+| 20. 起動した時に対象のVCにいるのが人かbotかを、GUILD_MEMBERS の特権intentなしで知れるか［C］。GUILD_CREATE の voice_states には user_id だけが入る見込み［B］。知れなければ、RESTで1人ずつ取るか、Developer Portal で GUILD_MEMBERS をオンにする | AT-07 の前提に「他のbotも対象のVCにいる」を足す | 2周目 |
