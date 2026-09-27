@@ -27,6 +27,10 @@ docker run -d --name voicevox --restart unless-stopped \
 
 入っているかは未確認です。
 
+```sh
+sudo apt install -y build-essential cmake pkg-config libopus-dev
+```
+
 ### 2. botを置く
 
 - botは、VPSの上で `cargo build --release -j 1` でビルドします。

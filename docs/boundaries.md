@@ -81,7 +81,7 @@ VCの出入りから声が出るまで
 
 | 項目 | 確かめ方 | 確かめる工程 |
 |---|---|---|
-| 1. Ubuntu 22.04でsongbird 0.6（Opus）をビルドするのに、cmake・libopus-devが要るか［C］。VPSの上で `cargo build --release` がメモリ1.9GiB＋スワップ2GiBで通るか（`-j 1`）［C］。依存の版（tokio・reqwest・serde・toml・tracing・unicode-segmentation・symphonia）と、絵文字を判定するcrateの選定［C］ | VOICEVOXのコンテナを止めた状態で、songbirdを依存に入れた構成を `cargo build --release -j 1` でビルドし、かかった時間と、メモリ・スワップの最大の使用量を測る。通らない場合の代替の候補：GitHub Actionsでビルドし、できたバイナリをVPSに置く。そのときは、VPSとglibcをそろえるため、runnerを `ubuntu-22.04` に固定するか、`ubuntu:22.04` のコンテナの中でビルドする。これでそろうかは未確認［C］ | ToDo一覧の1番目 |
+| 1. Ubuntu 22.04でsongbird 0.6（Opus）をビルドするのに、cmake・libopus-devが要るか［C］。VPSの上で `cargo build --release` がメモリ1.9GiB＋スワップ2GiBで通るか（`-j 1`）［C］。依存の版（tokio・reqwest・serde・toml・tracing・unicode-segmentation・symphonia）と、絵文字を判定するcrateの選定［C］ | 通った（2026-09-27・-j 1・最大 約0.9GB・約14分）。cmake が必須。代替（GitHub Actions）は不要。数字は `docs/measurements.md` の① | ToDo一覧の1番目 |
 | 2. VOICEVOX ENGINE（`voicevox/voicevox_engine:cpu-latest`）が、メモリ1.9GiBのVPSで、botとnginxと一緒に動くか。公式のREADMEには必要なメモリの記載が無い［C］ | 1番のビルドが終わってから、コンテナを `-p 127.0.0.1:50021:50021` で起動し、30文字ほどの文を続けて合成させて、`docker stats` でメモリの最大の使用量を測る。動かなければ、Q-115のbに切り替える（自宅のWindows PCのVOICEVOXをTailscale経由で呼ぶ。VPSにTailscaleが要る［C］） | ToDo一覧の2番目 |
 | 3. VPSから、songbird 0.6 でDAVEを使ってVCにつながるか［C］ | AT-01を通す | ToDo一覧の最初のほう |
 | 4. メモリ上のwavを、一時ファイルを作らずにsongbirdに渡せるか［C］ | songbird 0.6 のドキュメントとexamplesを読み、AT-37で確かめる | ToDo一覧の最初のほう（P-6の直し方が変わるため） |

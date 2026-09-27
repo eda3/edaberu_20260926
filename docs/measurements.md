@@ -6,13 +6,16 @@ VPSやテスト用のサーバーで測った数字と、見えたことを書�
 
 - 手元（Windows 11・rustc 1.98.0・MSVC・scoop の cmake）での確認（2026-09-27）：`cargo build -p edaberu_core`・`cargo check --workspace`・`cargo test --workspace`（songbird と opus2 を含む）が通った。VPSでの数字は下に書く
 
-- 測った日：
-- 入れた物（apt・rustup の版）：
-- `cargo build --release -j 1` の結果：通った／通らなかった
-- Elapsed (wall clock) time：
-- Maximum resident set size（KB）：
-- ビルド中のスワップの最大（`free -m` の used）：
-- 通らなかったときのエラー（先頭20行）：
+- 測った日：2026-09-27
+- 入れた物（apt・rustup の版）：apt で build-essential・cmake・pkg-config・libopus-dev・time、rustup（rustc の版は未記録）
+- `cargo build --release -j 1` の結果：通った（2回目）
+  - 1回目：7:55.94・最大RSS 799,048KB・libopus_sys で失敗（cmake 未導入）→ `apt install cmake` で解消
+  - 2回目：6:07.13・最大RSS 918,176KB・exit 0
+  - 合計：約14分
+- Elapsed (wall clock) time：6:07.13（2回目）。1回目と合わせて約14分
+- Maximum resident set size（KB）：918,176（2回の大きい方。約0.9GB）
+- ビルド中のスワップの最大（`free -m` の used）：未計測（GNU time の Swaps 欄は Linux では常に0なので根拠にしない）
+- 通らなかったときのエラー（先頭20行）：1回目は libopus_sys のビルドで失敗（cmake 未導入）。先頭20行は未記録
 
 ## ② VPSでのVOICEVOX（`docs/todo.md` 1周目・4節の2番）
 

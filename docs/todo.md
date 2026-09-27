@@ -19,7 +19,7 @@
   - メモ: ルートの `Cargo.toml` は `[workspace] members = ["edaberu_core", "edaberu"]`、`resolver = "3"`。edition は 2024。`edaberu_core` は lib（モジュールは空で、`pub mod` の宣言だけでよい）。`edaberu` は bin（`main.rs` は「起動して終了」だけ）。依存は `docs/boundaries.md` 3節の表どおり。songbird は `default-features = false`、機能 `driver`・`gateway`・`twilight`・`rustls`・`tws`。symphonia の機能は `wav`・`pcm`（機能名は確度B。通らなければ crates.io で正しい名前を確かめて3節に書き戻す）。`.gitignore`（`target/`・`config.toml`・`*.env`）と `config.example.toml`（3節の設定項目を全部、値は見本）も作る。LICENSE は未定なので作らない。
   - 足してよい依存: `docs/boundaries.md` 3節の表にある物すべて。版は crates.io の最新の安定版を選び、選んだ版を3節の「版」の欄に書き戻す。絵文字を判定する crate はまだ入れない。
   - 完了条件: `cargo build -p edaberu_core` が手元で通る。`cargo check --workspace` も通れば、その旨をメモに書く。手元（Windows）で songbird（Opus）のビルドが通らないときは、エラーの先頭20行を `docs/measurements.md` に貼って、この項目は完了にする（`edaberu` 側のビルドは次の【VPS】①で確かめる）
-- [ ] 【VPS】① ビルドの実測（`docs/test-items.md` ①・4節の1番）
+- [x] 【VPS】① ビルドの実測（`docs/test-items.md` ①・4節の1番）
   - メモ: VOICEVOXのコンテナは起動しない（まだ無い）。順に打つ。
     1. `sudo apt install -y build-essential cmake pkg-config libopus-dev time`
     2. `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh` → `source ~/.cargo/env`
