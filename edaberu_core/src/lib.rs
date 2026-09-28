@@ -18,3 +18,7 @@ pub mod state;
 pub mod tts;
 /// VCの出入りへの対応を決める。
 pub mod voice_rules;
+
+/// テスト関数の戻り値（テストも `?` で書くため。各部品のテストで共通に使う）。
+#[cfg(test)]
+type TestResult = Result<(), Box<dyn std::error::Error>>;

@@ -43,28 +43,17 @@ pub struct Config {
     pub voicevox_url: String,
 }
 
-/// 設定ファイルに書かれたままの形。必須の項目は、無いことを自分で見分けるため `Option` で受ける（B-41）。
+/// 設定ファイルに書かれたままの形。書かれなかった項目は `None` で、必須の誤り（B-41）と既定値は [`parse`] で決める。
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct FileConfig {
     guild_id: Option<u64>,
     text_channel_id: Option<u64>,
     voice_channel_id: Option<u64>,
-    #[serde(default)]
-    name_mode: NameMode,
-    #[serde(default = "default_max_chars")]
-    max_chars: usize,
+    name_mode: Option<NameMode>,
+    max_chars: Option<usize>,
     speaker_id: Option<u32>,
-    #[serde(default = "default_voicevox_url")]
-    voicevox_url: String,
-}
-
-const fn default_max_chars() -> usize {
-    DEFAULT_MAX_CHARS
-}
-
-fn default_voicevox_url() -> String {
-    DEFAULT_VOICEVOX_URL.to_owned()
+    voicevox_url: Option<String>,
 }
 
 /// 設定やトークンを使えない理由。表示（`Display`）が、そのまま終了の理由の文になる。
@@ -140,12 +129,14 @@ pub fn parse(text: Option<&str>) -> Result<Config, ConfigError> {
         voice_channel_id: file
             .voice_channel_id
             .ok_or(ConfigError::MissingField("voice_channel_id"))?,
-        name_mode: file.name_mode,
-        max_chars: file.max_chars,
+        name_mode: file.name_mode.unwrap_or_default(),
+        max_chars: file.max_chars.unwrap_or(DEFAULT_MAX_CHARS),
         speaker_id: file
             .speaker_id
             .ok_or(ConfigError::MissingField("speaker_id"))?,
-        voicevox_url: file.voicevox_url,
+        voicevox_url: file
+            .voicevox_url
+            .unwrap_or_else(|| DEFAULT_VOICEVOX_URL.to_owned()),
     };
     if config.max_chars < 1 {
         return Err(ConfigError::MaxCharsTooSmall);
@@ -180,11 +171,10 @@ pub fn check_token(read: Result<String, VarError>) -> Result<String, ConfigError
 
 #[cfg(test)]
 mod tests {
-    use std::{env::VarError, error::Error, ffi::OsString};
+    use std::{env::VarError, error::Error as _, ffi::OsString};
 
     use super::{Config, ConfigError, NameMode, check_token, parse};
-
-    type TestResult = Result<(), Box<dyn Error>>;
+    use crate::TestResult;
 
     /// リポジトリの直下にある見本の設定ファイル。
     const EXAMPLE: &str = include_str!("../../config.example.toml");
@@ -234,11 +224,9 @@ mod tests {
 
     #[test]
     fn item3_file_missing_returns_copy_steps() -> TestResult {
-        let error = parse(None).err().ok_or("ファイルが無いのに Ok が返った")?;
-
-        assert_eq!(error, ConfigError::FileMissing);
+        assert_eq!(parse(None), Err(ConfigError::FileMissing));
         assert_eq!(
-            error.to_string(),
+            ConfigError::FileMissing.to_string(),
             "設定ファイル config.toml が無い（B-38）。見本をコピーして値を書き換える：cp config.example.toml config.toml"
         );
         Ok(())
@@ -253,10 +241,10 @@ mod tests {
             .err()
             .ok_or("壊れた書き方なのに Ok が返った")?;
 
-        let ConfigError::Invalid { line, .. } = &error else {
-            return Err(format!("種類が違う: {error:?}").into());
-        };
-        assert_eq!(*line, Some(3));
+        assert!(
+            matches!(error, ConfigError::Invalid { line: Some(3), .. }),
+            "{error:?}"
+        );
         assert!(
             error
                 .to_string()
@@ -271,14 +259,12 @@ mod tests {
         // 2行目の max_chars が数でなく文字列
         let text = "guild_id = 11\nmax_chars = \"30\"\ntext_channel_id = 12\nvoice_channel_id = 13\nspeaker_id = 14\n";
 
-        let error = parse(Some(text))
-            .err()
-            .ok_or("値の形が違うのに Ok が返った")?;
+        let result = parse(Some(text));
 
-        let ConfigError::Invalid { line, .. } = &error else {
-            return Err(format!("種類が違う: {error:?}").into());
-        };
-        assert_eq!(*line, Some(2));
+        assert!(
+            matches!(result, Err(ConfigError::Invalid { line: Some(2), .. })),
+            "{result:?}"
+        );
         Ok(())
     }
 
@@ -336,12 +322,9 @@ mod tests {
     #[test]
     fn item3_max_chars_zero_is_rejected() -> TestResult {
         let zero = format!("{REQUIRED_ONLY}max_chars = 0\n");
-        let error = parse(Some(&zero))
-            .err()
-            .ok_or("max_chars = 0 なのに Ok が返った")?;
-        assert_eq!(error, ConfigError::MaxCharsTooSmall);
+        assert_eq!(parse(Some(&zero)), Err(ConfigError::MaxCharsTooSmall));
         assert_eq!(
-            error.to_string(),
+            ConfigError::MaxCharsTooSmall.to_string(),
             "config.toml の max_chars が1より小さい（B-42）"
         );
 
@@ -351,12 +334,10 @@ mod tests {
 
         // 負の数は、値の形の誤りとして5行目が返る
         let negative = format!("{REQUIRED_ONLY}max_chars = -1\n");
-        let error = parse(Some(&negative))
-            .err()
-            .ok_or("max_chars = -1 なのに Ok が返った")?;
+        let result = parse(Some(&negative));
         assert!(
-            matches!(error, ConfigError::Invalid { line: Some(5), .. }),
-            "{error:?}"
+            matches!(result, Err(ConfigError::Invalid { line: Some(5), .. })),
+            "{result:?}"
         );
         Ok(())
     }
@@ -392,12 +373,10 @@ mod tests {
         }
 
         let text = format!("{REQUIRED_ONLY}name_mode = \"sometimes\"\n");
-        let error = parse(Some(&text))
-            .err()
-            .ok_or("3つ以外の値なのに Ok が返った")?;
+        let result = parse(Some(&text));
         assert!(
-            matches!(error, ConfigError::Invalid { line: Some(5), .. }),
-            "{error:?}"
+            matches!(result, Err(ConfigError::Invalid { line: Some(5), .. })),
+            "{result:?}"
         );
         Ok(())
     }

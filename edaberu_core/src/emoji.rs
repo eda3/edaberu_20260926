@@ -14,11 +14,8 @@ pub fn remove(text: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::error::Error;
-
     use super::remove;
-
-    type TestResult = Result<(), Box<dyn Error>>;
+    use crate::TestResult;
 
     #[test]
     fn item4_r15_emoji_in_list_are_removed() -> TestResult {

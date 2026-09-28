@@ -14,20 +14,14 @@ pub fn choose(
     [nickname, display_name, username]
         .into_iter()
         .flatten()
-        .find_map(|name| {
-            let name = emoji::remove(name);
-            let name = name.trim();
-            (!name.is_empty()).then(|| name.to_owned())
-        })
+        .map(|name| emoji::remove(name).trim().to_owned())
+        .find(|name| !name.is_empty())
 }
 
 #[cfg(test)]
 mod tests {
-    use std::error::Error;
-
     use super::choose;
-
-    type TestResult = Result<(), Box<dyn Error>>;
+    use crate::TestResult;
 
     #[test]
     fn item4_r36_nickname_then_display_name_then_username() -> TestResult {
