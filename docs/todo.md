@@ -78,9 +78,9 @@
 
 ゴール: `cargo test -p edaberu_core` で ③〜⑫ が全部通る。twilight・songbird に依存しない。
 
-- [ ] `config` を作り、③を満たす（3節の設定項目、B-38〜B-42・B-44）
+- [x] `config` を作り、③を満たす（3節の設定項目、B-38〜B-42・B-44）
   - メモ: 設定ファイルは `config.toml`（TOML・serde）。知らない項目は誤りにする（`#[serde(deny_unknown_fields)]`）。`max_chars` は1以上。トークンは環境変数 `DISCORD_TOKEN` から。終了の理由は文字列で返し、`main` が表示する。`config.example.toml` の中身と一致させる（テストで読み込む）
-- [ ] `names` と、絵文字の判定を作り、④を満たす（R-36・R-41・R-42）
+- [x] `names` と、絵文字の判定を作り、④を満たす（R-36・R-41・R-42）
   - メモ: 絵文字の判定は小さなモジュール（`emoji`）に分けて `speech` からも使う。判定は Unicode の Extended_Pictographic（または Emoji）の性質で行う。
   - 足してよい依存: 絵文字を判定する crate を1つ（候補：`unicode-properties`・`emojis`・`unic-emoji-char`。Unicode 15 以降の表を持つ物を選び、選んだ物と理由を `docs/boundaries.md` 3節に書く）
 - [ ] `speech` の置き換え・読まない物を作り、⑤を満たす（R-01〜R-21）
@@ -108,6 +108,7 @@
 
 - [ ] `gateway` に `intake` → `names` → `speech` → `queue` → `tts` → `player` をつなぐ（B-21・B-31・2節の「部品のつながり」）
   - メモ: twilight の型から `speech` が使う値だけを写す（本文・転送元の本文・添付の数・スタンプの有無・投票の有無・書いた人の3つの名前・IDなど）。転送・投票・スタンプの欄が twilight 0.17 の型にあるかを確かめ、無ければ4節の11番に書いて止まって聞く。2周目の `beep.wav` は外す
+  - ID の 0 は twilight の Id::new_checked で誤りにし、B-39 の文で終了する（main の仮の読み込みと同じ扱い）
   - 完了条件: AT-14・AT-16 が通る（VCで聞く）
 - [ ] 起動時の確認と、状態の表示と、後始末（B-34〜B-37・B-52）
   - メモ: 起動時に `/speakers` で話者を確かめる（B-34・B-36）。VOICEVOXが動いていなければ警告して続ける（B-35）。状態の表示にクレジット（例「VOICEVOX:ずんだもん」。好きな文を出せるかは4節の12番）。SIGTERM・SIGINT で、読み上げを止めてVCから出てから終わる（`tokio::signal`）。設定やトークンの誤りは0でない終了コードで終わる。ログは tracing で標準出力へ。本文はふだん出さない

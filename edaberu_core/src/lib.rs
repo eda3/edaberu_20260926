@@ -2,6 +2,8 @@
 
 /// 設定ファイルと環境変数を読み、確かめる。
 pub mod config;
+/// 絵文字を取り除く（`names` と `speech` が使う）。
+pub mod emoji;
 /// 届いた発言を読むかどうかを決める。
 pub mod intake;
 /// 読む名前を決める。
@@ -16,3 +18,7 @@ pub mod state;
 pub mod tts;
 /// VCの出入りへの対応を決める。
 pub mod voice_rules;
+
+/// テスト関数の戻り値（テストも `?` で書くため。各部品のテストで共通に使う）。
+#[cfg(test)]
+type TestResult = Result<(), Box<dyn std::error::Error>>;

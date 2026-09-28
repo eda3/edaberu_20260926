@@ -73,7 +73,7 @@ VCの出入りから声が出るまで
 | unicode-segmentation | 1.13.3 | 書記素で文字数を数える（R-33） | A（版） |
 | anyhow | 1.0.104 | `edaberu` 側のエラー（`anyhow::Result`。CLAUDE.md の Code Style）。`edaberu_core` は使わず、自前のエラー型にする | A（版） |
 | async-trait | 0.1.92 | `edaberu` 側だけ。songbirdの `EventHandler` trait（`async fn act`）を実装するため。songbirdは自分では再エクスポートしていない | A（版） |
-| 絵文字を判定するcrate（候補は未定） | 未確認 | Unicodeの絵文字の一覧に載るかどうかの判定（R-15・R-16・R-41） | C |
+| emojis | 0.9.0（Unicode 17.0 の絵文字の一覧を持つ。依存は phf だけ。ライセンスは (MIT OR Apache-2.0) AND Unicode-3.0） | Unicodeの絵文字の一覧に載るかどうかの判定（R-15・R-16・R-41）。書記素（unicode-segmentation）ごとに `emojis::get` で一覧を引き、載る物を消す。肌の色・ZWJ の組み合わせ・国旗も1つとして消える。選んだ理由：④は「一覧に載る物だけを消す」で、この crate は一覧そのものを持つ。unicode-properties 0.1.4（Unicode 17.0）は文字ごとの Emoji・Emoji_Component の性質だけで、Emoji の性質では数字・#・* も絵文字になる（R-42 の「eda3」の3が消える）。Extended_Pictographic はどの候補も持たない。unic-emoji-char 0.9.0 は絵文字の表が Emoji 5.0 で、Unicode 15 以降の条件に合わない | A（版・Unicode の版は crate のソースで確認。♪☆★① と数字が一覧に無いことはテストで確認） |
 
 ## 4 未確認の項目
 
